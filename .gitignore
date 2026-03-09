@@ -1,0 +1,29 @@
+## Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+## Environment / Secrets
+.env
+
+## Data (large/generated)
+data/raw/images/train/
+data/raw/images/valid/
+data/raw/images/test/
+data/processed/chroma_db/
+data/models/*.pt
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.vscode/
+.idea/
+
+## Docker / Temp
+*.log
+data/temp_*

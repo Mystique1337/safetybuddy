@@ -1,0 +1,13 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv
+node_modules
+data/processed/chroma_db
+*.egg-info
+.mypy_cache
+.pytest_cache
+notebooks/__pycache__
+scripts/__pycache__

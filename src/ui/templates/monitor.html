@@ -1,0 +1,585 @@
+{% extends "base.html" %}
+{% block title %}SafetyBuddy — Video Monitor{% endblock %}
+{% block page_title %}<i class="bi bi-camera-video me-2"></i>PPE Video Monitor{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Video Feed -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <ul class="nav nav-tabs card-header-tabs" id="monitorTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="live-tab" data-bs-toggle="tab"
+                            data-bs-target="#livePane" type="button" role="tab">
+                            <i class="bi bi-webcam me-1"></i>Live Webcam
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="upload-tab" data-bs-toggle="tab"
+                            data-bs-target="#uploadPane" type="button" role="tab">
+                            <i class="bi bi-file-earmark-play me-1"></i>Upload Video
+                        </button>
+                    </li>
+                </ul>
+                <span class="badge bg-secondary" id="processingStatus">Ready</span>
+            </div>
+
+            <div class="card-body">
+                <div class="tab-content" id="monitorTabContent">
+
+                    <!-- ═══ LIVE WEBCAM TAB ═══ -->
+                    <div class="tab-pane fade show active" id="livePane" role="tabpanel">
+                        <!-- Before starting -->
+                        <div id="liveStartArea" class="text-center py-4">
+                            <i class="bi bi-webcam display-3 text-muted d-block mb-3"></i>
+                            <h5>Live PPE Detection</h5>
+                            <p class="text-muted">
+                                Uses your browser camera + YOLO26 to detect PPE violations in real time.<br>
+                                <small>Frames are sent to the server for processing — requires YOLO model.</small>
+                            </p>
+                            <button class="btn btn-primary btn-lg mt-2" id="btnStartLive" onclick="startLiveDetection()">
+                                <i class="bi bi-play-circle me-2"></i>Start Camera
+                            </button>
+                            <div id="liveModelWarning" class="alert alert-warning mt-3" style="display:none;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>YOLO model not found.</strong> Train it using the Colab notebook and save as
+                                <code>data/models/ppe_yolo26n.pt</code>
+                            </div>
+                        </div>
+
+                        <!-- Live feed (hidden until started) -->
+                        <div id="liveFeedArea" style="display: none;">
+                            <div class="position-relative mb-3">
+                                <!-- Hidden video element for camera capture -->
+                                <video id="webcamVideo" autoplay playsinline muted style="display:none;"></video>
+                                <!-- Canvas to grab frames -->
+                                <canvas id="captureCanvas" style="display:none;"></canvas>
+                                <!-- Annotated output from YOLO -->
+                                <img id="annotatedFrame" class="w-100 rounded"
+                                     style="min-height: 300px; background: #111; object-fit: contain;"
+                                     alt="Live feed">
+                                <!-- Overlay status bar -->
+                                <div class="position-absolute top-0 start-0 end-0 d-flex justify-content-between px-3 py-2"
+                                     style="background: rgba(0,0,0,0.6);">
+                                    <span id="liveStatusBadge" class="badge bg-success">
+                                        <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i>LIVE
+                                    </span>
+                                    <span class="text-white small" id="liveFps">-- FPS</span>
+                                </div>
+                            </div>
+
+                            <!-- Live stats bar -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-3">
+                                    <div class="stat-card stat-card-sm">
+                                        <div class="stat-value" id="liveFrameCount">0</div>
+                                        <div class="stat-label">Frames</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-card stat-card-sm">
+                                        <div class="stat-value text-success" id="liveCompliant">0</div>
+                                        <div class="stat-label">Compliant</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-card stat-card-sm">
+                                        <div class="stat-value text-danger" id="liveViolations">0</div>
+                                        <div class="stat-label">Violations</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-card stat-card-sm">
+                                        <div class="stat-value" id="liveDetections">0</div>
+                                        <div class="stat-label">Detections</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-danger" onclick="stopLiveDetection()">
+                                    <i class="bi bi-stop-circle me-1"></i>Stop
+                                </button>
+                                <button class="btn btn-outline-secondary" id="btnSnapshotAnalyze" onclick="snapshotAnalyze()">
+                                    <i class="bi bi-camera me-1"></i>Snapshot + GPT-4o Analyze
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ UPLOAD VIDEO TAB ═══ -->
+                    <div class="tab-pane fade" id="uploadPane" role="tabpanel">
+                        <!-- Upload Area -->
+                        <div id="uploadArea" class="upload-zone text-center py-5">
+                            <i class="bi bi-cloud-arrow-up display-3 text-muted d-block mb-3"></i>
+                            <h5>Upload a video file for PPE analysis</h5>
+                            <p class="text-muted">Supports MP4, AVI, MOV — YOLO26 will scan every frame for PPE violations</p>
+                            <label class="btn btn-primary btn-lg mt-2" for="videoUpload">
+                                <i class="bi bi-upload me-2"></i>Choose Video
+                                <input type="file" id="videoUpload" accept="video/*" hidden onchange="handleVideoUpload(event)">
+                            </label>
+                        </div>
+
+                        <!-- Processing View -->
+                        <div id="processingView" style="display: none;">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small id="progressText">Processing...</small>
+                                    <small id="progressPct">0%</small>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar"
+                                         role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div id="resultsView" style="display: none;">
+                            <div class="row g-3 mb-3" id="resultStats"></div>
+                            <div id="violationGallery"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings + Alert Log -->
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-sliders me-2"></i>Settings</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Detection Confidence: <span id="confVal">0.40</span></label>
+                    <input type="range" class="form-range" id="confSlider" min="0.2" max="0.9" step="0.05" value="0.4"
+                        oninput="document.getElementById('confVal').textContent = parseFloat(this.value).toFixed(2)">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Live FPS Target: <span id="fpsVal">3</span></label>
+                    <input type="range" class="form-range" id="fpsSlider" min="1" max="10" step="1" value="3"
+                        oninput="document.getElementById('fpsVal').textContent = this.value">
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="autoAnalyze" checked>
+                    <label class="form-check-label small" for="autoAnalyze">Auto-analyze violations with GPT-4o</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Violation Log</h6>
+                <span class="badge bg-danger" id="violationCount">0</span>
+            </div>
+            <div class="card-body p-0" id="violationLog" style="max-height: 50vh; overflow-y: auto;">
+                <div class="text-center text-muted py-4">
+                    <small>No violations detected yet</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ═══════════════════════════════════════════
+//  LIVE WEBCAM DETECTION
+// ═══════════════════════════════════════════
+
+let liveStream = null;
+let liveRunning = false;
+let liveStats = { frames: 0, compliant: 0, violations: 0, detections: 0 };
+let violationLogItems = [];
+
+// Check model availability on load
+(async function checkModel() {
+    try {
+        const res = await fetch('/api/model-status');
+        const data = await res.json();
+        if (!data.available) {
+            document.getElementById('liveModelWarning').style.display = 'block';
+            document.getElementById('btnStartLive').disabled = true;
+            document.getElementById('btnStartLive').classList.replace('btn-primary', 'btn-secondary');
+        }
+    } catch (e) { /* silent */ }
+})();
+
+async function startLiveDetection() {
+    const btn = document.getElementById('btnStartLive');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Starting...';
+
+    try {
+        liveStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'environment' },
+            audio: false,
+        });
+
+        const video = document.getElementById('webcamVideo');
+        video.srcObject = liveStream;
+        await video.play();
+
+        document.getElementById('liveStartArea').style.display = 'none';
+        document.getElementById('liveFeedArea').style.display = 'block';
+        document.getElementById('processingStatus').textContent = 'LIVE';
+        document.getElementById('processingStatus').className = 'badge bg-success';
+
+        liveRunning = true;
+        liveStats = { frames: 0, compliant: 0, violations: 0, detections: 0 };
+
+        sendNextFrame();
+
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Camera';
+        let msg = e.message;
+        if (e.name === 'NotAllowedError') msg = 'Camera permission denied. Please allow camera access.';
+        if (e.name === 'NotFoundError') msg = 'No camera found on this device.';
+        showToast(msg, 'danger');
+    }
+}
+
+function stopLiveDetection() {
+    liveRunning = false;
+
+    if (liveStream) {
+        liveStream.getTracks().forEach(t => t.stop());
+        liveStream = null;
+    }
+
+    document.getElementById('liveStartArea').style.display = 'block';
+    document.getElementById('liveFeedArea').style.display = 'none';
+    document.getElementById('processingStatus').textContent = 'Stopped';
+    document.getElementById('processingStatus').className = 'badge bg-secondary';
+
+    const btn = document.getElementById('btnStartLive');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Camera';
+}
+
+async function sendNextFrame() {
+    if (!liveRunning) return;
+
+    const fpsTarget = parseInt(document.getElementById('fpsSlider').value) || 3;
+    const interval = 1000 / fpsTarget;
+
+    try {
+        const video = document.getElementById('webcamVideo');
+        const canvas = document.getElementById('captureCanvas');
+
+        if (video.readyState < 2) {
+            setTimeout(sendNextFrame, 100);
+            return;
+        }
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        const frameB64 = dataUrl.split(',')[1];
+
+        const startTime = performance.now();
+
+        const res = await fetch('/api/detect-frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                frame: frameB64,
+                confidence: parseFloat(document.getElementById('confSlider').value),
+            }),
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || `Server error ${res.status}`);
+        }
+
+        const data = await res.json();
+        const elapsed = performance.now() - startTime;
+
+        document.getElementById('annotatedFrame').src = 'data:image/jpeg;base64,' + data.annotated_frame;
+
+        liveStats.frames++;
+        liveStats.compliant += data.compliant_count || 0;
+        liveStats.violations += data.violation_count || 0;
+        liveStats.detections += (data.detections || []).length;
+
+        document.getElementById('liveFrameCount').textContent = liveStats.frames;
+        document.getElementById('liveCompliant').textContent = liveStats.compliant;
+        document.getElementById('liveViolations').textContent = liveStats.violations;
+        document.getElementById('liveDetections').textContent = liveStats.detections;
+        document.getElementById('liveFps').textContent = (1000 / elapsed).toFixed(1) + ' FPS';
+
+        const statusBadge = document.getElementById('liveStatusBadge');
+        if (data.has_violations) {
+            statusBadge.className = 'badge bg-danger';
+            statusBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>VIOLATION';
+        } else {
+            statusBadge.className = 'badge bg-success';
+            statusBadge.innerHTML = '<i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i>LIVE';
+        }
+
+        if (data.has_violations) {
+            const vnames = data.detections.filter(d => d.is_violation).map(d => d.class_name);
+            addViolationLogItem(new Date().toLocaleTimeString(), vnames.join(', '));
+        }
+
+    } catch (e) {
+        console.error('Frame detection error:', e);
+    }
+
+    if (liveRunning) {
+        setTimeout(sendNextFrame, interval);
+    }
+}
+
+function addViolationLogItem(time, summary) {
+    violationLogItems.unshift({ time, summary });
+    if (violationLogItems.length > 50) violationLogItems.length = 50;
+
+    document.getElementById('violationCount').textContent = violationLogItems.length;
+    const log = document.getElementById('violationLog');
+    log.innerHTML = '<div class="list-group list-group-flush">' +
+        violationLogItems.slice(0, 20).map(v => `
+            <div class="list-group-item py-2">
+                <div class="d-flex justify-content-between">
+                    <span class="badge bg-danger">HIGH</span>
+                    <small class="text-muted">${v.time}</small>
+                </div>
+                <small>${v.summary}</small>
+            </div>
+        `).join('') +
+    '</div>';
+}
+
+async function snapshotAnalyze() {
+    if (!liveRunning) return;
+    const btn = document.getElementById('btnSnapshotAnalyze');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Analyzing...';
+
+    try {
+        const video = document.getElementById('webcamVideo');
+        const canvas = document.getElementById('captureCanvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        const frameB64 = dataUrl.split(',')[1];
+
+        const formData = new FormData();
+        const byteStr = atob(frameB64);
+        const ab = new ArrayBuffer(byteStr.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+        formData.append('image', new Blob([ab], {type: 'image/jpeg'}), 'snapshot.jpg');
+
+        const res = await fetch('/api/analyze-image', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        addViolationLogItem('📸 GPT-4o', data.analysis.substring(0, 100) + '...');
+        showToast('GPT-4o analysis complete — check violation log', 'success');
+
+        const log = document.getElementById('violationLog');
+        const detail = document.createElement('div');
+        detail.className = 'p-3 border-bottom';
+        detail.innerHTML = `
+            <div class="alert alert-info small mb-0">
+                <strong><i class="bi bi-robot me-1"></i>GPT-4o Snapshot Analysis</strong>
+                <div class="mt-2">${marked.parse(data.analysis)}</div>
+                <small class="text-muted">Tokens: ${data.tokens_used}</small>
+            </div>
+        `;
+        log.prepend(detail);
+
+    } catch (e) {
+        showToast('Snapshot analysis failed: ' + e.message, 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-camera me-1"></i>Snapshot + GPT-4o Analyze';
+    }
+}
+
+
+// ═══════════════════════════════════════════
+//  VIDEO UPLOAD PROCESSING
+// ═══════════════════════════════════════════
+
+async function handleVideoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const uploadArea = document.getElementById('uploadArea');
+    const processingView = document.getElementById('processingView');
+    const resultsView = document.getElementById('resultsView');
+    const status = document.getElementById('processingStatus');
+
+    uploadArea.style.display = 'none';
+    processingView.style.display = 'block';
+    resultsView.style.display = 'none';
+    status.textContent = 'Processing...';
+    status.className = 'badge bg-warning';
+
+    const bar = document.getElementById('progressBar');
+    const pctEl = document.getElementById('progressPct');
+    const textEl = document.getElementById('progressText');
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress = Math.min(progress + Math.random() * 5, 90);
+        bar.style.width = progress + '%';
+        pctEl.textContent = Math.round(progress) + '%';
+    }, 500);
+
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('confidence', document.getElementById('confSlider').value);
+
+    try {
+        textEl.textContent = `Processing ${file.name}...`;
+        const res = await fetch('/api/process-video', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        clearInterval(progressInterval);
+        bar.style.width = '100%';
+        pctEl.textContent = '100%';
+
+        if (data.error) throw new Error(data.error);
+
+        status.textContent = 'Complete';
+        status.className = 'badge bg-success';
+
+        showUploadResults(data);
+
+        if (document.getElementById('autoAnalyze').checked && data.violations && data.violations.length > 0) {
+            for (const v of data.violations.slice(0, 3)) {
+                await analyzeViolation(v);
+            }
+        }
+    } catch (e) {
+        clearInterval(progressInterval);
+        status.textContent = 'Error';
+        status.className = 'badge bg-danger';
+        textEl.textContent = `Error: ${e.message}`;
+        showToast(`Video processing failed: ${e.message}`, 'danger');
+    }
+}
+
+function showUploadResults(data) {
+    document.getElementById('processingView').style.display = 'none';
+    document.getElementById('resultsView').style.display = 'block';
+
+    document.getElementById('resultStats').innerHTML = `
+        <div class="col-4">
+            <div class="stat-card stat-card-sm">
+                <div class="stat-value">${data.total_frames}</div>
+                <div class="stat-label">Total Frames</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="stat-card stat-card-sm">
+                <div class="stat-value">${data.processed_frames}</div>
+                <div class="stat-label">Processed</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="stat-card stat-card-sm ${data.violation_count > 0 ? 'border-danger' : 'border-success'}">
+                <div class="stat-value ${data.violation_count > 0 ? 'text-danger' : 'text-success'}">${data.violation_count}</div>
+                <div class="stat-label">Violations</div>
+            </div>
+        </div>
+    `;
+
+    const gallery = document.getElementById('violationGallery');
+    document.getElementById('violationCount').textContent = data.violation_count;
+
+    if (data.violations && data.violations.length > 0) {
+        gallery.innerHTML = '<h6 class="mb-3">Violation Snapshots</h6>' +
+            data.violations.map((v, i) => `
+                <div class="card mb-3 border-danger">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <img src="data:image/jpeg;base64,${v.thumbnail}" class="img-fluid rounded" alt="Frame ${v.frame}">
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>@ ${v.time_sec}s</h6>
+                                <p class="mb-1">${v.violations.join(', ')}</p>
+                                <div class="mt-2" id="analysis-${i}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        const log = document.getElementById('violationLog');
+        log.innerHTML = '<div class="list-group list-group-flush">' +
+            data.violations.map(v => `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-danger">HIGH</span>
+                        <small class="text-muted">${v.time_sec}s</small>
+                    </div>
+                    <small>${v.violations.join(', ')}</small>
+                </div>
+            `).join('') +
+        '</div>';
+    } else {
+        gallery.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-check-circle display-3 text-success d-block mb-2"></i>
+                <h5 class="text-success">No PPE Violations Detected</h5>
+                <p class="text-muted">All workers appear to be properly equipped.</p>
+            </div>
+        `;
+    }
+}
+
+async function analyzeViolation(violation) {
+    try {
+        const res = await fetch('/api/analyze-violation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                detections: violation.violations.join(', '),
+                image_base64: violation.thumbnail,
+            }),
+        });
+        const data = await res.json();
+        if (data.analysis) {
+            const els = document.querySelectorAll('[id^="analysis-"]');
+            for (const el of els) {
+                if (!el.innerHTML.trim()) {
+                    el.innerHTML = `
+                        <div class="alert alert-info small mb-0">
+                            <strong><i class="bi bi-robot me-1"></i>GPT-4o Analysis:</strong>
+                            <div class="mt-1">${marked.parse(data.analysis)}</div>
+                            ${data.compliance ? `<hr><div>${marked.parse(data.compliance)}</div>` : ''}
+                        </div>
+                    `;
+                    break;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Violation analysis error:', e);
+    }
+}
+
+// Clean up camera on page leave
+window.addEventListener('beforeunload', () => {
+    if (liveStream) {
+        liveStream.getTracks().forEach(t => t.stop());
+    }
+});
+</script>
+{% endblock %}

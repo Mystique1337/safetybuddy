@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}SafetyBuddy — Compliance Reference{% endblock %}
+{% block page_title %}<i class="bi bi-clipboard-check me-2"></i>PPE Compliance Reference{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Quick Reference Table -->
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-table me-2"></i>OSHA PPE Standards Quick Reference</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>PPE Type</th>
+                                <th>OSHA Standard</th>
+                                <th>Required When</th>
+                                <th>Key Requirements</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><i class="bi bi-shield-check text-primary me-1"></i> General PPE</td>
+                                <td><strong>29 CFR 1910.132</strong></td>
+                                <td>Any workplace hazard requiring PPE</td>
+                                <td>Hazard assessment, training, employer payment</td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-eyeglasses text-info me-1"></i> Eye &amp; Face</td>
+                                <td><strong>29 CFR 1910.133</strong></td>
+                                <td>Flying particles, chemicals, vapors, light radiation</td>
+                                <td>Side protection, prescription lens accommodation, filter shade tables</td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-shield-fill text-warning me-1"></i> Head</td>
+                                <td><strong>29 CFR 1910.135</strong></td>
+                                <td>Falling/flying objects, electrical conductors</td>
+                                <td>ANSI Z89.1 compliance, electrical shock reduction</td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-boot text-success me-1"></i> Foot</td>
+                                <td><strong>29 CFR 1910.136</strong></td>
+                                <td>Falling/rolling objects, sole piercing, electrical hazard</td>
+                                <td>ASTM F-2412/F-2413 or ANSI Z41 compliance</td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-hand-index text-danger me-1"></i> Hand</td>
+                                <td><strong>29 CFR 1910.138</strong></td>
+                                <td>Chemical, cut, burn, puncture, temperature hazards</td>
+                                <td>Selection based on task evaluation</td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-mask text-secondary me-1"></i> Respiratory</td>
+                                <td><strong>29 CFR 1910.134</strong></td>
+                                <td>Airborne contaminant exposure</td>
+                                <td>Written program, medical eval, fit testing</td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-ear text-purple me-1"></i> Hearing</td>
+                                <td><strong>29 CFR 1910.95</strong></td>
+                                <td>Noise &gt; 85 dBA TWA</td>
+                                <td>Conservation program, protector fitting</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Regulation Sections -->
+        <div class="accordion" id="regAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reg132">
+                        <strong>1910.132 — General Requirements</strong>
+                    </button>
+                </h2>
+                <div id="reg132" class="accordion-collapse collapse" data-bs-parent="#regAccordion">
+                    <div class="accordion-body small">
+                        <ul>
+                            <li><strong>1910.132(a) Application:</strong> PPE shall be provided wherever hazards are present (chemical, radiological, mechanical irritants)</li>
+                            <li><strong>1910.132(d) Hazard Assessment:</strong> Employer must assess workplace, select PPE, communicate decisions, ensure proper fit</li>
+                            <li><strong>1910.132(d)(2) Certification:</strong> Written certification of hazard assessment required</li>
+                            <li><strong>1910.132(e) Defective PPE:</strong> Shall not be used</li>
+                            <li><strong>1910.132(f) Training:</strong> When/what/how PPE is necessary; donning, doffing, limitations, care, disposal</li>
+                            <li><strong>1910.132(f)(3) Retraining:</strong> Required when workplace changes, PPE changes, or knowledge gaps observed</li>
+                            <li><strong>1910.132(h) Payment:</strong> Employer pays for PPE (exceptions: non-specialty safety-toe, everyday clothing)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reg133">
+                        <strong>1910.133 — Eye and Face Protection</strong>
+                    </button>
+                </h2>
+                <div id="reg133" class="accordion-collapse collapse" data-bs-parent="#regAccordion">
+                    <div class="accordion-body small">
+                        <ul>
+                            <li><strong>1910.133(a)(1):</strong> Appropriate eye/face protection when exposed to flying particles, molten metal, chemicals, gases, light radiation</li>
+                            <li><strong>1910.133(a)(2):</strong> Side protection required for flying object hazards</li>
+                            <li><strong>1910.133(a)(3):</strong> Must accommodate prescription lenses</li>
+                            <li><strong>1910.133(a)(5):</strong> Filter lens shade numbers for welding/cutting (see shade table)</li>
+                            <li><strong>1910.133(b):</strong> Must comply with ANSI/ISEA Z87.1-2010, ANSI Z87.1-2003, or ANSI Z87.1-1989</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reg135">
+                        <strong>1910.135 — Head Protection</strong>
+                    </button>
+                </h2>
+                <div id="reg135" class="accordion-collapse collapse" data-bs-parent="#regAccordion">
+                    <div class="accordion-body small">
+                        <ul>
+                            <li><strong>1910.135(a)(1):</strong> Protective helmet when potential for head injury from falling objects</li>
+                            <li><strong>1910.135(a)(2):</strong> Electrical shock reduction helmet near exposed conductors</li>
+                            <li><strong>1910.135(b):</strong> Must comply with ANSI Z89.1-2009, 2003, or 1997</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reg136">
+                        <strong>1910.136 — Foot Protection</strong>
+                    </button>
+                </h2>
+                <div id="reg136" class="accordion-collapse collapse" data-bs-parent="#regAccordion">
+                    <div class="accordion-body small">
+                        <ul>
+                            <li><strong>1910.136(a):</strong> Protective footwear for falling/rolling objects, sole piercing, electrical hazard</li>
+                            <li><strong>1910.136(b):</strong> Must comply with ASTM F-2412/F-2413-2005, ANSI Z41-1999, or ANSI Z41-1991</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reg138">
+                        <strong>1910.138 — Hand Protection</strong>
+                    </button>
+                </h2>
+                <div id="reg138" class="accordion-collapse collapse" data-bs-parent="#regAccordion">
+                    <div class="accordion-body small">
+                        <ul>
+                            <li><strong>1910.138(a):</strong> Appropriate hand protection for absorption, cuts, abrasions, punctures, chemical/thermal burns, temperature extremes</li>
+                            <li><strong>1910.138(b):</strong> Selection based on performance characteristics vs. task, conditions, duration, and hazards</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Compliance Tips</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 mb-3">
+                    <div class="flex-shrink-0"><span class="badge bg-danger">1</span></div>
+                    <div class="small"><strong>Written Hazard Assessment</strong> — Required by 1910.132(d)(2). Must identify workplace, evaluator, and date.</div>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <div class="flex-shrink-0"><span class="badge bg-warning text-dark">2</span></div>
+                    <div class="small"><strong>Training Records</strong> — Document who was trained, when, and what PPE. Retrain when conditions change.</div>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <div class="flex-shrink-0"><span class="badge bg-info">3</span></div>
+                    <div class="small"><strong>PPE Inspection</strong> — Check all PPE before each use. Remove defective equipment immediately (1910.132(e)).</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="flex-shrink-0"><span class="badge bg-success">4</span></div>
+                    <div class="small"><strong>Employer Payment</strong> — Employers must pay for required PPE except non-specialty safety-toe footwear and everyday clothing.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-link-45deg me-2"></i>OSHA Resources</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.132" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>1910.132 General PPE</a></li>
+                    <li class="mb-2"><a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.133" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>1910.133 Eye &amp; Face</a></li>
+                    <li class="mb-2"><a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.135" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>1910.135 Head</a></li>
+                    <li class="mb-2"><a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.136" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>1910.136 Foot</a></li>
+                    <li class="mb-2"><a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.138" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>1910.138 Hand</a></li>
+                    <li><a href="https://www.osha.gov/personal-protective-equipment" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>OSHA PPE Topic Page</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

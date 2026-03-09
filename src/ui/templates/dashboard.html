@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}SafetyBuddy — Dashboard{% endblock %}
+{% block page_title %}<i class="bi bi-speedometer2 me-2"></i>Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-subtle text-primary">
+                <i class="bi bi-chat-dots"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statQueries">0</span>
+                <span class="stat-label">Chat Queries</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success-subtle text-success">
+                <i class="bi bi-image"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statImages">0</span>
+                <span class="stat-label">Images Analyzed</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-subtle text-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statViolations">0</span>
+                <span class="stat-label">Violations</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info-subtle text-info">
+                <i class="bi bi-film"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statFrames">0</span>
+                <span class="stat-label">Video Frames</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Recent Alerts -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-bell me-2"></i>Recent Alerts</h6>
+                <span class="badge bg-danger" id="alertCountBadge">0</span>
+            </div>
+            <div class="card-body p-0" id="alertsList">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-shield-check fs-1 d-block mb-2"></i>
+                    No alerts yet. Use the <a href="/monitor">Video Monitor</a> to start detecting PPE violations.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions + Recent Queries -->
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/chat" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-chat-dots me-2"></i>Ask a PPE question
+                    </a>
+                    <a href="/chat" class="btn btn-outline-success text-start" id="btnUploadImage">
+                        <i class="bi bi-upload me-2"></i>Upload inspection image
+                    </a>
+                    <a href="/monitor" class="btn btn-outline-warning text-start">
+                        <i class="bi bi-camera-video me-2"></i>Start video monitoring
+                    </a>
+                    <a href="/compliance" class="btn btn-outline-info text-start">
+                        <i class="bi bi-clipboard-check me-2"></i>View regulations
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Queries</h6>
+            </div>
+            <div class="card-body p-0" id="recentQueries">
+                <div class="text-center text-muted py-4">
+                    <small>No queries yet</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadDashboard() {
+    try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+
+        // Stats
+        document.getElementById('statQueries').textContent = data.stats.queries;
+        document.getElementById('statImages').textContent = data.stats.images_analyzed;
+        document.getElementById('statViolations').textContent = data.stats.violations;
+        document.getElementById('statFrames').textContent = data.stats.video_frames;
+
+        // Alerts
+        const alertsList = document.getElementById('alertsList');
+        const alerts = data.alerts || [];
+        document.getElementById('alertCountBadge').textContent = alerts.length;
+
+        if (alerts.length > 0) {
+            alertsList.innerHTML = '<div class="list-group list-group-flush">' +
+                alerts.slice(-15).reverse().map(a => `
+                    <div class="list-group-item d-flex align-items-center gap-3">
+                        <span class="badge ${a.severity === 'HIGH' ? 'bg-danger' : 'bg-warning'}">
+                            ${a.severity}
+                        </span>
+                        <div class="flex-grow-1">
+                            <small class="text-muted">${a.time || ''}</small>
+                            <div>${a.summary}</div>
+                        </div>
+                        <small class="text-muted">${a.source || ''}</small>
+                    </div>
+                `).join('') +
+            '</div>';
+        }
+
+        // Recent queries
+        const queriesList = document.getElementById('recentQueries');
+        const msgs = data.recent_messages || [];
+        if (msgs.length > 0) {
+            queriesList.innerHTML = '<div class="list-group list-group-flush">' +
+                msgs.reverse().map(m => `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <small class="badge bg-secondary">${m.mode}</small>
+                            <small class="text-muted">${new Date(m.timestamp).toLocaleTimeString()}</small>
+                        </div>
+                        <div class="mt-1 text-truncate">${m.query}</div>
+                    </div>
+                `).join('') +
+            '</div>';
+        }
+    } catch (e) {
+        console.error('Dashboard load error:', e);
+    }
+}
+
+loadDashboard();
+setInterval(loadDashboard, 15000);
+</script>
+{% endblock %}

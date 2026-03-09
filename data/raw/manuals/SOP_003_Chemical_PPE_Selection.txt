@@ -1,0 +1,44 @@
+STANDARD OPERATING PROCEDURE
+Document ID: SOP-PPE-003
+Title: Chemical-Specific PPE Selection Guide
+Revision: 1.5 | Effective Date: 2024-06-01
+Department: Environmental Health & Safety
+
+1. PURPOSE
+Provide guidance on selecting appropriate PPE for chemical handling operations based on Safety Data Sheet (SDS) requirements and OSHA standards.
+
+2. SCOPE
+Applies to all personnel who handle, transfer, mix, or may be exposed to hazardous chemicals.
+
+3. PROCEDURE
+
+Step 1: Obtain the SDS. Check Section 2 (Hazard Identification) and Section 8 (Exposure Controls/PPE).
+Step 2: Identify exposure routes: skin contact, eye contact, inhalation, ingestion.
+Step 3: Select PPE using the matrix below.
+Step 4: Verify glove compatibility with manufacturer chemical resistance chart.
+Step 5: Document on Form PPE-CHEM-01.
+
+4. CHEMICAL-PPE MATRIX
+
+Dilute acids (under 10 percent concentration): Nitrile gloves (8 mil minimum), chemical splash goggles, lab coat or chemical apron. Respiratory not required unless vapor above PEL. Emergency eyewash within 10 seconds travel per 1910.151(c).
+
+Concentrated acids (over 10 percent): Butyl rubber or neoprene gloves (14 mil minimum), splash goggles AND face shield, half-face APR with acid gas cartridge if above PEL, chemical resistant apron and arm sleeves.
+
+Organic solvents (acetone, toluene, MEK, xylene): Short exposure under 15 min use nitrile gloves. Extended exposure over 15 min use PVA or Silver Shield laminate gloves. Splash goggles required. OV cartridge respirator if above PEL.
+
+Caustics and bases (sodium hydroxide, potassium hydroxide): Neoprene or butyl rubber gloves. Splash goggles AND face shield. Chemical resistant apron.
+
+Flammable liquids: Nitrile gloves (non-sparking). Safety glasses minimum, splash goggles for pouring. FR clothing required, NO synthetic fabrics. Eliminate ignition sources, ground and bond containers.
+
+Dusts and particulates: Nuisance dust below PEL use N95 facepiece. Toxic dust at or above PEL use P100 or HEPA cartridge APR, tight goggles, Tyvek coveralls and boot covers.
+
+5. EMERGENCY RESPONSE
+
+Eye contact: Flush at eyewash station minimum 15 minutes. Remove contacts if easily removable. Seek medical attention with SDS.
+
+Skin contact: Remove contaminated clothing. Flush skin minimum 15 minutes. Do NOT use solvents to clean skin.
+
+Inhalation: Move to fresh air. If breathing difficulty call emergency services. If cartridge breakthrough exit area and replace cartridge.
+
+6. REFERENCES
+OSHA 29 CFR 1910.132-138, 1910.1200, 1910.134, 1910.151(c), NIOSH Pocket Guide.

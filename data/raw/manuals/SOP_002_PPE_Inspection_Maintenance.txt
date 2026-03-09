@@ -1,0 +1,40 @@
+STANDARD OPERATING PROCEDURE
+Document ID: SOP-PPE-002
+Title: Daily PPE Inspection and Maintenance
+Revision: 2.1 | Effective Date: 2024-03-01
+Department: Environmental Health & Safety
+
+1. PURPOSE
+Ensure all PPE is inspected before use and maintained in serviceable condition per OSHA 1910.132(a) and manufacturer specifications.
+
+2. SCOPE
+Applies to all employees required to use PPE as identified in the workplace hazard assessment (SOP-PPE-001).
+
+3. DAILY INSPECTION CHECKLIST
+
+3.1 HARD HAT [OSHA 1910.135, ANSI Z89.1]
+Shell free of cracks, dents, or holes. No signs of UV degradation (chalky, faded, brittle). Suspension system intact and properly adjusted (1 to 1.25 inch clearance). Expiration date not exceeded (5 years from manufacture). No modifications such as drilled holes, paint, or stickers covering damage. REPLACE IF: dropped from height, struck by falling object, any visible crack, shell feels brittle, suspension broken.
+
+3.2 SAFETY GLASSES AND GOGGLES [OSHA 1910.133, ANSI Z87.1]
+Lenses free of deep scratches, cracks, or pitting. Frames intact and not bent. Side shields present and securely attached. Marked with Z87 on frame and lens. For splash goggles check seal and gasket for deterioration. REPLACE IF: impact damage, unable to see clearly, chemical contamination.
+
+3.3 GLOVES [OSHA 1910.138]
+No tears, punctures, cuts, or abrasion. No chemical degradation (swelling, hardening, tackiness). Correct glove type for the hazard (check SOP-PPE-003). Proper fit. REPLACE IF: any visible damage, after chemical contact beyond rated time.
+
+3.4 SAFETY BOOTS [OSHA 1910.136, ANSI Z41]
+Safety toe intact. Sole not worn smooth. No holes or separation. Laces in good condition. Metatarsal guard present if required. REPLACE IF: sole separation, worn tread, exposed toe cap.
+
+3.5 RESPIRATOR [OSHA 1910.134]
+Facepiece clean and not distorted. Head straps elastic. Valves functional. Cartridges within change-out date. Positive and negative pressure seal checks pass. REPLACE IF: facepiece damaged, valves stuck, cartridges expired.
+
+3.6 HIGH-VISIBILITY VEST
+Reflective strips intact and visible. No tears. Correct class for work area. Fasteners functional. REPLACE IF: reflective material degraded, tears.
+
+4. NON-CONFORMANCE PROCEDURE
+Step 1: Remove defective PPE from service immediately. Step 2: Tag as DO NOT USE. Step 3: Notify supervisor. Step 4: Log on Form PPE-NC-01. Step 5: Supervisor issues replacement BEFORE work resumes. Step 6: If no replacement available, STOP WORK.
+
+5. CLEANING AND STORAGE
+Safety glasses: mild soap and water. Hard hats: damp cloth, no solvents. Respirators: disassemble, mild detergent, air dry, bag. Store away from sunlight, heat, and chemicals. Never store on vehicle dashboards.
+
+6. REFERENCES
+OSHA 29 CFR 1910.132(a) and (e), SOP-PPE-001, manufacturer care instructions.

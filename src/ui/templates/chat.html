@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% block title %}SafetyBuddy — Chat{% endblock %}
+{% block page_title %}<i class="bi bi-chat-dots me-2"></i>PPE Safety Chat{% endblock %}
+
+{% block content %}
+<div class="row g-3 h-100">
+    <!-- Chat Area -->
+    <div class="col-lg-8 d-flex flex-column" style="min-height: 70vh;">
+        <!-- Messages -->
+        <div class="card flex-grow-1 mb-3">
+            <div class="card-body chat-messages" id="chatMessages">
+                <div class="chat-welcome text-center py-5">
+                    <i class="bi bi-shield-check display-1 text-primary d-block mb-3"></i>
+                    <h4>Welcome to SafetyBuddy</h4>
+                    <p class="text-muted">Ask any PPE compliance question, upload an inspection image, or describe a safety situation.</p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                            data-query="What PPE is required for transferring concentrated sulfuric acid?">
+                            🧪 Chemical PPE
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                            data-query="What are OSHA requirements for hard hat inspections?">
+                            ⛑️ Hard hat inspections
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                            data-query="We have no written hazard assessment. What is our compliance status?">
+                            📋 Compliance audit
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                            data-query="A worker got chemical burns handling solvents with nitrile gloves. Analyze.">
+                            🚨 Incident analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Preview -->
+        <div class="card mb-3" id="imagePreviewCard" style="display: none;">
+            <div class="card-body d-flex align-items-center gap-3 py-2">
+                <img id="imagePreview" src="" alt="Preview" style="max-height: 80px; border-radius: 8px;">
+                <div class="flex-grow-1">
+                    <small class="text-muted" id="imageFileName">image.jpg</small>
+                    <div id="imageAnalysisStatus"></div>
+                </div>
+                <button class="btn btn-sm btn-outline-success" id="btnAnalyzeImage" onclick="analyzeImage()">
+                    <i class="bi bi-eye"></i> Analyze PPE
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearImage()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="card">
+            <div class="card-body py-2">
+                <form id="chatForm" onsubmit="sendMessage(event)">
+                    <div class="d-flex gap-2 align-items-end">
+                        <label class="btn btn-outline-secondary" for="imageUpload" title="Upload image">
+                            <i class="bi bi-paperclip"></i>
+                            <input type="file" id="imageUpload" accept="image/*" hidden onchange="previewImage(event)">
+                        </label>
+                        <div class="flex-grow-1">
+                            <textarea class="form-control" id="chatInput" rows="1"
+                                placeholder="Describe a PPE situation or ask a question..."
+                                onkeydown="handleKeyDown(event)"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="sendBtn">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-gear me-2"></i>Settings</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Analysis Mode</label>
+                    <select class="form-select form-select-sm" id="modeSelect">
+                        <option value="advisor" selected>🛡️ Safety Advisor</option>
+                        <option value="incident">🚨 Incident Analyst</option>
+                        <option value="compliance">📋 Compliance Auditor</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Filter Sources</label>
+                    <select class="form-select form-select-sm" id="docFilter">
+                        <option value="all" selected>All Documents</option>
+                        <option value="regulation">Regulations</option>
+                        <option value="operating_procedure">SOPs</option>
+                        <option value="incident_report">Incident Reports</option>
+                        <option value="safety_manual">Safety Manuals</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Sources to Retrieve: <span id="nResultsVal">5</span></label>
+                    <input type="range" class="form-range" id="nResults" min="3" max="10" value="5"
+                        oninput="document.getElementById('nResultsVal').textContent = this.value">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sources Panel -->
+        <div class="card" id="sourcesPanel" style="display: none;">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>Sources & Compliance</h6>
+            </div>
+            <div class="card-body" id="sourcesContent"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentImageB64 = null;
+let currentImageDesc = null;
+
+// Suggestion buttons
+document.querySelectorAll('.suggestion-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('chatInput').value = btn.dataset.query;
+        sendMessage(new Event('submit'));
+    });
+});
+
+function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(e);
+    }
+}
+
+function previewImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        document.getElementById('imagePreview').src = ev.target.result;
+        document.getElementById('imageFileName').textContent = file.name;
+        document.getElementById('imagePreviewCard').style.display = 'block';
+        document.getElementById('imageAnalysisStatus').innerHTML = '';
+        currentImageB64 = ev.target.result.split(',')[1];
+        currentImageDesc = null;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImage() {
+    document.getElementById('imagePreviewCard').style.display = 'none';
+    document.getElementById('imageUpload').value = '';
+    currentImageB64 = null;
+    currentImageDesc = null;
+}
+
+async function analyzeImage() {
+    if (!currentImageB64) return;
+    const btn = document.getElementById('btnAnalyzeImage');
+    const status = document.getElementById('imageAnalysisStatus');
+    btn.disabled = true;
+    status.innerHTML = '<small class="text-warning"><i class="bi bi-hourglass-split"></i> Analyzing with GPT-4o Vision...</small>';
+
+    try {
+        const formData = new FormData();
+        // Convert base64 back to blob
+        const byteStr = atob(currentImageB64);
+        const ab = new ArrayBuffer(byteStr.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+        formData.append('image', new Blob([ab], {type: 'image/jpeg'}), 'upload.jpg');
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
+        const res = await fetch('/api/analyze-image', {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Server error (${res.status})`);
+        }
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        currentImageDesc = data.analysis;
+        status.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Analysis ready — included in next message</small>';
+
+        // If YOLO annotated image is available, show it alongside the analysis
+        if (data.annotated_image) {
+            // Build detection summary badges
+            let badgeHtml = '';
+            if (data.yolo_detections && data.yolo_detections.length) {
+                badgeHtml = '<div class="mt-2 mb-2">' +
+                    data.yolo_detections.map(d => {
+                        const cls = d.is_violation ? 'bg-danger' : 'bg-success';
+                        return `<span class="badge ${cls} me-1">${d.class_name} ${(d.confidence * 100).toFixed(0)}%</span>`;
+                    }).join('') + '</div>';
+            }
+
+            // Show annotated image + analysis as a single rich message
+            const richHtml =
+                `<div class="mb-3">
+                    <img src="data:image/jpeg;base64,${data.annotated_image}" class="img-fluid rounded" style="max-height: 400px;" alt="YOLO26 annotated">
+                    <div class="mt-1"><small class="text-muted"><i class="bi bi-cpu me-1"></i>YOLO26 PPE Detection</small></div>
+                    ${badgeHtml}
+                </div>` + marked.parse(data.analysis);
+            appendMessage('assistant', richHtml, true);
+        } else {
+            // No YOLO available — just show GPT-4o text
+            appendMessage('assistant', data.analysis);
+        }
+    } catch (e) {
+        const msg = e.name === 'AbortError' ? 'Request timed out (2 min). Try a smaller image.' : e.message;
+        status.innerHTML = `<small class="text-danger"><i class="bi bi-x-circle"></i> ${msg}</small>`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function sendMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Hide welcome
+    const welcome = document.querySelector('.chat-welcome');
+    if (welcome) welcome.remove();
+
+    // Show user message
+    appendMessage('user', message);
+    input.value = '';
+
+    // Show loading
+    const loadingId = 'loading-' + Date.now();
+    appendLoading(loadingId);
+
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message,
+                mode: document.getElementById('modeSelect').value,
+                doc_filter: document.getElementById('docFilter').value,
+                n_results: parseInt(document.getElementById('nResults').value),
+                image_base64: currentImageB64,
+                image_description: currentImageDesc,
+            }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        const data = await res.json();
+        removeLoading(loadingId);
+
+        if (data.error) throw new Error(data.error);
+
+        appendMessage('assistant', data.response);
+        showSources(data.sources, data.compliance, data.traceability, data.tokens_used, data.mode);
+
+        // Clear image after use
+        clearImage();
+    } catch (e) {
+        removeLoading(loadingId);
+        appendMessage('error', `Error: ${e.message}`);
+    } finally {
+        sendBtn.disabled = false;
+    }
+}
+
+function appendMessage(role, content, rawHtml = false) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `chat-bubble chat-${role}`;
+
+    const icon = role === 'user' ? 'bi-person' : role === 'error' ? 'bi-exclamation-triangle' : 'bi-shield-check';
+    const label = role === 'user' ? 'You' : role === 'error' ? 'Error' : 'SafetyBuddy';
+
+    // rawHtml = true when content contains pre-built HTML (e.g. annotated image + markdown)
+    const body = rawHtml ? content : marked.parse(content);
+
+    div.innerHTML = `
+        <div class="chat-bubble-header">
+            <i class="bi ${icon}"></i> <strong>${label}</strong>
+        </div>
+        <div class="chat-bubble-body">${body}</div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendLoading(id) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-bubble chat-assistant';
+    div.id = id;
+    div.innerHTML = `
+        <div class="chat-bubble-header"><i class="bi bi-shield-check"></i> <strong>SafetyBuddy</strong></div>
+        <div class="chat-bubble-body">
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function removeLoading(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+function showSources(sources, compliance, traceability, tokens, mode) {
+    const panel = document.getElementById('sourcesPanel');
+    const content = document.getElementById('sourcesContent');
+    panel.style.display = 'block';
+
+    let html = `<small class="text-muted d-block mb-2">Mode: ${mode} | Tokens: ${tokens}</small>`;
+
+    if (sources && sources.length) {
+        html += '<h6 class="small fw-semibold mt-2">📄 Sources</h6><ul class="list-unstyled small">';
+        sources.forEach(s => {
+            html += `<li class="mb-1"><strong>${s.source}</strong> (p.${s.page}) <span class="badge bg-secondary">${s.type}</span> <span class="text-muted">${s.relevance}</span></li>`;
+        });
+        html += '</ul>';
+    }
+
+    if (compliance) {
+        html += `<h6 class="small fw-semibold mt-3">📋 Compliance</h6><div class="small">${marked.parse(compliance)}</div>`;
+    }
+
+    if (traceability) {
+        html += `<div class="small text-muted mt-2 fst-italic">${traceability}</div>`;
+    }
+
+    content.innerHTML = html;
+}
+</script>
+{% endblock %}

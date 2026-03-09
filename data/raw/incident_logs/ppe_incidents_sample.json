@@ -1,0 +1,90 @@
+[
+  {
+    "id": "PPE-INC-001",
+    "date": "2024-03-15",
+    "title": "Eye Injury from Chemical Splash - No Goggles",
+    "description": "Operator transferring sulfuric acid (20% concentration) from drum to process tank using manual pump. Hose connection failed causing acid splash to face and eyes. Operator wore safety glasses but not chemical splash goggles as required by SOP-PPE-003 for acid handling. Sustained chemical burns to left cornea. Eyewash used within 15 seconds. Transported to hospital.",
+    "root_cause": "Wrong PPE type for task. Safety glasses lack splash protection. SOP required goggles for acid transfer but not enforced by supervisor.",
+    "regulation_violated": "OSHA 1910.133(a)(1) - eye and face protection from liquid chemicals",
+    "severity": "Serious",
+    "corrective_actions": "Splash goggles mandatory for acid transfers. Face shield plus goggles for concentrations over 10 percent. Supervisor pre-task PPE verification added.",
+    "ppe_category": "eye_face"
+  },
+  {
+    "id": "PPE-INC-002",
+    "date": "2024-05-22",
+    "title": "Head Injury from Falling Object - Hard Hat Removed",
+    "description": "Maintenance technician performing inspection in warehouse hard hat zone. Removed hard hat due to heat. Box fell from overhead rack approximately 12 feet striking head. Sustained concussion and 3cm scalp laceration. Hard hat found on nearby workbench.",
+    "root_cause": "Employee voluntarily removed required PPE. Contributing factors: excessive heat at 95F, no ventilated hard hat liners provided, supervisor missed non-compliance during walkthrough.",
+    "regulation_violated": "OSHA 1910.135(a)(1) - head protection where falling objects are hazard",
+    "severity": "Serious",
+    "corrective_actions": "Cooling vented hat liners issued. Hard hat compliance added to hourly supervisor walkthrough. Additional warehouse ventilation installed.",
+    "ppe_category": "head"
+  },
+  {
+    "id": "PPE-INC-003",
+    "date": "2024-07-08",
+    "title": "Hand Laceration from Metal Fabrication - Wrong Glove Type",
+    "description": "Fabrication worker deburring sheet metal edges with hand file. Wore nitrile disposable gloves instead of required cut-resistant gloves ANSI A4 or higher. Metal edge sliced through nitrile glove lacerating left index finger requiring 8 stitches. Worker could not find cut-resistant gloves at workstation and used available nitrile gloves instead.",
+    "root_cause": "Inadequate PPE availability at point of use. Cut-resistant gloves not restocked at workstation. No stop-work policy for missing PPE.",
+    "regulation_violated": "OSHA 1910.138(a) - select appropriate hand protection",
+    "severity": "Other-Than-Serious",
+    "corrective_actions": "PPE restocking procedure implemented with daily checks. Minimum 5 pairs cut-resistant gloves at each fabrication station. Stop-work authority card issued for missing PPE.",
+    "ppe_category": "hand"
+  },
+  {
+    "id": "PPE-INC-004",
+    "date": "2024-01-10",
+    "title": "Respiratory Exposure During Tank Cleaning - Expired Cartridge",
+    "description": "Worker entered process tank for manual cleaning with half-face APR using organic vapor cartridges. Reported dizziness and nausea after 45 minutes. Investigation found respirator cartridges were 3 months past change-out date. No cartridge change schedule posted. Worker treated for solvent vapor inhalation at clinic and released.",
+    "root_cause": "Expired respirator cartridges. No change-out schedule maintained. Pre-use inspection did not include cartridge date verification.",
+    "regulation_violated": "OSHA 1910.134(h)(2)(i) - cartridge change-out schedules",
+    "severity": "Serious",
+    "corrective_actions": "Color-coded cartridge labels with expiration dates on each respirator. Monthly respirator inspection log implemented. Change-out schedule posted at respirator storage area.",
+    "ppe_category": "respiratory"
+  },
+  {
+    "id": "PPE-INC-005",
+    "date": "2024-09-03",
+    "title": "Foot Crush Injury - Sneakers in Safety-Toe Required Area",
+    "description": "Forklift drove over worker foot on loading dock. Worker wearing sneakers instead of safety-toe boots in posted safety-toe zone. Sustained metatarsal fracture. Safety signage at dock entrance partially obscured by stored pallets.",
+    "root_cause": "Worker not wearing required footwear in posted area. Safety sign partially blocked. No enforcement at entry point.",
+    "regulation_violated": "OSHA 1910.136(a) - foot protection",
+    "severity": "Serious",
+    "corrective_actions": "Relocated signage to unobstructed positions. Badge-in gate at dock entrance requiring PPE acknowledgment. Supervisor spot-checks at shift start.",
+    "ppe_category": "foot"
+  },
+  {
+    "id": "PPE-INC-006",
+    "date": "2024-04-18",
+    "title": "Near Miss - PPE Prevented Grinding Wheel Injury",
+    "description": "During grinding operation grinding wheel catastrophically disintegrated sending fragments toward operator face and upper body. Operator wearing face shield and safety glasses underneath and leather apron per SOP requirements. Face shield absorbed major fragment impact and cracked but prevented facial injury. Safety glasses intact as secondary protection. No injuries sustained.",
+    "root_cause": "Equipment failure due to grinding wheel defect. PPE performed as designed and prevented serious injury. Demonstrates effectiveness of layered PPE approach.",
+    "regulation_violated": "None - full PPE compliance. Incident demonstrates effectiveness of layered PPE.",
+    "severity": "Near Miss - No Injury",
+    "corrective_actions": "Grinding wheel supplier notified of batch defect. Pre-use wheel ring test procedure reinforced. Incident used as positive PPE compliance training example.",
+    "ppe_category": "eye_face"
+  },
+  {
+    "id": "PPE-INC-007",
+    "date": "2024-11-12",
+    "title": "Multiple PPE Violations Found During Site Audit",
+    "description": "Unannounced safety audit of Building 3 production floor found 7 of 22 workers at 32 percent with PPE violations. 3 workers without safety glasses in mandatory eye protection zone, 2 workers with hard hats but suspension not properly adjusted, 1 worker wearing torn chemical-resistant gloves, 1 worker with no hearing protection in 90 plus dBA area. Supervisor was present but did not enforce PPE compliance.",
+    "root_cause": "Systemic enforcement failure. Supervisor training inadequate on PPE compliance monitoring. No consequence management for repeated violations.",
+    "regulation_violated": "OSHA 1910.132(a) general requirements, 1910.132(f)(3) retraining, 1910.133(a)(1) eye protection, 1910.95(i) hearing protection",
+    "severity": "Multiple Serious",
+    "corrective_actions": "All 7 workers retrained immediately and documented per 1910.132(f)(4). Supervisor enrolled in PPE enforcement training. Progressive discipline policy implemented. Weekly unannounced PPE audits for 90 days.",
+    "ppe_category": "multiple"
+  },
+  {
+    "id": "PPE-INC-008",
+    "date": "2023-08-25",
+    "title": "Hearing Loss Claim - Inadequate Hearing Protection Program",
+    "description": "Annual audiometric testing revealed standard threshold shift for 3 workers in CNC machining area. Noise monitoring showed 92 dBA TWA. Workers were provided foam earplugs but not fit-tested. Two workers found inserting earplugs incorrectly achieving only approximately 10 dB NRR instead of rated 29 dB NRR.",
+    "root_cause": "Hearing protection provided but not fit-tested. No proper insertion training. No verification that adequate attenuation was achieved.",
+    "regulation_violated": "OSHA 1910.95(i)(4) - proper fitting and training on use and care",
+    "severity": "Serious",
+    "corrective_actions": "Hearing protection fit-testing implemented for all exposed workers. Hands-on earplug insertion training with fit-check verification. Upgraded to pre-molded earplugs. Quarterly spot-checks on proper use.",
+    "ppe_category": "hearing"
+  }
+]

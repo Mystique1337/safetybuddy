@@ -1,0 +1,53 @@
+STANDARD OPERATING PROCEDURE
+Document ID: SOP-PPE-001
+Title: PPE Hazard Assessment and Selection
+Revision: 3.0 | Effective Date: 2024-01-15
+Department: Environmental Health & Safety
+
+1. PURPOSE
+This procedure establishes requirements for conducting workplace hazard assessments and selecting appropriate personal protective equipment (PPE) in accordance with OSHA 29 CFR 1910.132(d).
+
+2. SCOPE
+Applies to all employees, contractors, and visitors at the facility who may be exposed to workplace hazards requiring PPE.
+
+3. RESPONSIBILITIES
+3.1 EHS Manager: Conduct initial and annual hazard assessments.
+3.2 Supervisors: Ensure employees wear required PPE for their tasks.
+3.3 Employees: Inspect PPE before each use, report damage immediately.
+
+4. PROCEDURE
+
+4.1 HAZARD ASSESSMENT
+Walk through each work area and identify hazards per OSHA guidelines. Document findings on Form PPE-HA-01. Categorize hazards: impact, penetration, compression, chemical, heat/cold, harmful dust, light/radiation. Certify assessment in writing per 1910.132(d)(2): must identify the workplace evaluated, person certifying, and date(s).
+
+4.2 PPE SELECTION BY HAZARD TYPE
+
+Eye and Face Protection [1910.133]:
+Safety glasses with side shields (ANSI Z87.1) for impact hazard areas. Chemical splash goggles for liquid chemical handling and acid transfer. Face shields plus safety glasses for grinding, cutting, chipping. Welding helmets with proper shade filter for welding operations.
+
+Head Protection [1910.135]:
+Hard hats (ANSI Z89.1 Type I, Class E) in all production areas, construction zones, areas with overhead hazards. Bump caps only for low-clearance maintenance areas (not rated for falling objects).
+
+Hand Protection [1910.138]:
+Nitrile gloves for general chemical handling. Butyl rubber gloves for concentrated acids and ketones. Cut-resistant gloves (ANSI A4+) for metal fabrication and glass handling. Leather gloves for welding and handling rough or hot materials.
+
+Foot Protection [1910.136]:
+Safety-toe boots (ANSI Z41) in warehouse, production, and loading dock areas. Metatarsal guards in heavy material handling areas. Chemical-resistant boots in chemical processing areas.
+
+Respiratory Protection [1910.134]:
+N95 filtering facepiece for nuisance dust and non-toxic particulates. Half-face APR with OV cartridges for organic vapor exposure. Full-face SCBA for IDLH atmospheres and confined space rescue. All respirator use requires medical evaluation and fit testing.
+
+Hearing Protection [1910.95]:
+Foam earplugs (NRR 29+) for areas exceeding 85 dBA TWA. Over-ear muffs for intermittent high-noise tasks. Dual protection (plugs plus muffs) for areas exceeding 100 dBA.
+
+High-Visibility Apparel:
+Class 2 vests in general warehouse and production areas. Class 3 vests for outdoor work, loading dock, areas with vehicle traffic.
+
+4.3 PPE INSPECTION BEFORE USE
+Visual inspection required before each use. Hard hats: check for cracks, dents, UV degradation, suspension damage. Safety glasses: scratches, loose frames, missing side shields. Gloves: tears, punctures, chemical degradation. Boots: worn soles, exposed steel toes. Remove from service immediately if defective per 1910.132(e).
+
+5. TRAINING REQUIREMENTS
+Per OSHA 1910.132(f), all employees must be trained on: when PPE is necessary, what PPE is necessary, how to properly don, doff, adjust, and wear PPE, limitations of the PPE, and proper care, maintenance, useful life and disposal. Training must be documented per 1910.132(f)(4). Retraining required when workplace hazards change, PPE types change, or employee demonstrates inadequate knowledge.
+
+6. REFERENCES
+OSHA 29 CFR 1910.132-138 (Subpart I), OSHA 29 CFR 1910.95 (Noise), ANSI Z87.1-2020, ANSI Z89.1-2014, OSHA Publication 3151.

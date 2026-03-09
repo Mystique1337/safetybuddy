@@ -21,14 +21,18 @@ echo ""
 echo "[1/5] Installing Docker & Git on EC2..."
 ssh $SSH_OPTS ec2-user@$EC2_HOST << 'REMOTE_INSTALL'
 if ! command -v docker &> /dev/null; then
-    sudo yum update -y
-    sudo yum install -y docker git
+    echo "Installing Docker & Git..."
+    sudo dnf update -y
+    sudo dnf install -y docker git
     sudo systemctl start docker
     sudo systemctl enable docker
     sudo usermod -aG docker ec2-user
+    # newgrp docker to apply group immediately
+    echo "Docker installed — group applied"
 fi
 
 if ! docker compose version &> /dev/null; then
+    echo "Installing Docker Compose plugin..."
     sudo mkdir -p /usr/local/lib/docker/cli-plugins
     sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
         -o /usr/local/lib/docker/cli-plugins/docker-compose
@@ -86,17 +90,17 @@ echo ""
 echo "[4/5] Building and starting Docker containers..."
 ssh $SSH_OPTS ec2-user@$EC2_HOST << REMOTE_DOCKER
 cd $APP_DIR
-docker compose down 2>/dev/null || true
-docker compose up --build -d
+sudo docker compose down 2>/dev/null || true
+sudo docker compose up --build -d
 echo "Waiting for app to start..."
-sleep 8
-curl -sf http://localhost:5000/api/health && echo "" && echo "✅ App is healthy!" || echo "⚠️  Health check pending — check: docker compose logs"
+sleep 10
+curl -sf http://localhost:5000/api/health && echo "" && echo "✅ App is healthy!" || echo "⚠️  Health check pending — check: sudo docker compose logs"
 REMOTE_DOCKER
 
 # ── 5. Status ─────────────────────────────────────────
 echo ""
 echo "[5/5] Deployment status..."
-ssh $SSH_OPTS ec2-user@$EC2_HOST "cd $APP_DIR && docker compose ps"
+ssh $SSH_OPTS ec2-user@$EC2_HOST "cd $APP_DIR && sudo docker compose ps"
 
 echo ""
 echo "═══════════════════════════════════════════════"

@@ -40,19 +40,19 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "`n[2/5] Ensuring Docker & Git are installed..." -ForegroundColor Yellow
 $installCmd = @'
 if ! command -v docker &> /dev/null; then
-    sudo yum update -y
-    sudo yum install -y docker git
+    sudo dnf update -y
+    sudo dnf install -y docker git
     sudo systemctl start docker
     sudo systemctl enable docker
     sudo usermod -aG docker $USER
 fi
-if ! docker compose version &> /dev/null; then
+if ! docker compose version &> /dev/null && ! sudo docker compose version &> /dev/null; then
     sudo mkdir -p /usr/local/lib/docker/cli-plugins
     sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
         -o /usr/local/lib/docker/cli-plugins/docker-compose
     sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 fi
-docker --version && docker compose version
+sudo docker --version && sudo docker compose version
 '@
 Invoke-Expression "$SSH '$installCmd'"
 
@@ -76,12 +76,12 @@ Invoke-Expression "$SSH `"$envCmd`""
 
 # ── 4. Build and run ──────────────────────────────────
 Write-Host "`n[4/5] Building and starting Docker containers..." -ForegroundColor Yellow
-$dockerCmd = "cd $APP_DIR && docker compose down 2>/dev/null; docker compose up --build -d && sleep 8 && curl -sf http://localhost:5000/api/health && echo ' Healthy!' || echo ' Starting...'"
+$dockerCmd = "cd $APP_DIR && sudo docker compose down 2>/dev/null; sudo docker compose up --build -d && sleep 10 && curl -sf http://localhost:5000/api/health && echo ' Healthy!' || echo ' Starting...'"
 Invoke-Expression "$SSH `"$dockerCmd`""
 
 # ── 5. Status ─────────────────────────────────────────
 Write-Host "`n[5/5] Deployment status:" -ForegroundColor Yellow
-Invoke-Expression "$SSH `"cd $APP_DIR && docker compose ps`""
+Invoke-Expression "$SSH `"cd $APP_DIR && sudo docker compose ps`""
 
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Green

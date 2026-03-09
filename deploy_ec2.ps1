@@ -24,7 +24,7 @@ $SSH = "ssh -o StrictHostKeyChecking=no -i `"$KeyFile`" $User@$EC2Host"
 $SCP = "scp -o StrictHostKeyChecking=no -i `"$KeyFile`""
 
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  SafetyBuddy — EC2 Setup & Deploy" -ForegroundColor Cyan
+Write-Host "  SafetyBuddy - EC2 Setup and Deploy" -ForegroundColor Cyan
 Write-Host "  Target: $EC2Host" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan
 
@@ -37,7 +37,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ── 2. Install Docker + Git on EC2 ────────────────────
-Write-Host "`n[2/5] Ensuring Docker & Git are installed..." -ForegroundColor Yellow
+Write-Host "`n[2/5] Ensuring Docker and Git are installed..." -ForegroundColor Yellow
 $installCmd = @'
 if ! command -v docker &> /dev/null; then
     sudo dnf update -y
@@ -52,13 +52,13 @@ if ! docker compose version &> /dev/null && ! sudo docker compose version &> /de
         -o /usr/local/lib/docker/cli-plugins/docker-compose
     sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 fi
-sudo docker --version && sudo docker compose version
+sudo docker --version; sudo docker compose version
 '@
 Invoke-Expression "$SSH '$installCmd'"
 
 # ── 3. Clone repo (or pull latest) + copy model ───────
 Write-Host "`n[3/5] Cloning/updating repo + uploading model..." -ForegroundColor Yellow
-$cloneCmd = "if [ ! -d '$APP_DIR/.git' ]; then git clone $REPO_URL $APP_DIR; else cd $APP_DIR && git fetch origin master && git reset --hard origin/master; fi"
+$cloneCmd = 'if [ ! -d "' + $APP_DIR + '/.git" ]; then git clone ' + $REPO_URL + ' ' + $APP_DIR + '; else cd ' + $APP_DIR + ' && git fetch origin master && git reset --hard origin/master; fi'
 Invoke-Expression "$SSH `"$cloneCmd`""
 
 # Upload YOLO model (not in git)
@@ -67,21 +67,22 @@ if (Test-Path "data\models\ppe_yolo26n.pt") {
     Invoke-Expression "$SSH `"mkdir -p $APP_DIR/data/models`""
     Invoke-Expression "$SCP `"data\models\ppe_yolo26n.pt`" ${User}@${EC2Host}:${APP_DIR}/data/models/"
 } else {
-    Write-Host "  No local YOLO model found — skipping" -ForegroundColor Gray
+    Write-Host "  No local YOLO model found - skipping" -ForegroundColor Gray
 }
 
 # Create .env if needed
-$envCmd = "if [ ! -f '$APP_DIR/.env' ]; then cp '$APP_DIR/.env.example' '$APP_DIR/.env'; echo 'Created .env — set OPENAI_API_KEY!'; else echo '.env exists'; fi"
+$envCmd = 'if [ ! -f "' + $APP_DIR + '/.env" ]; then cp "' + $APP_DIR + '/.env.example" "' + $APP_DIR + '/.env"; echo "Created .env"; else echo ".env exists"; fi'
 Invoke-Expression "$SSH `"$envCmd`""
 
 # ── 4. Build and run ──────────────────────────────────
 Write-Host "`n[4/5] Building and starting Docker containers..." -ForegroundColor Yellow
-$dockerCmd = "cd $APP_DIR && sudo docker compose down 2>/dev/null; sudo docker compose up --build -d && sleep 10 && curl -sf http://localhost:5000/api/health && echo ' Healthy!' || echo ' Starting...'"
+$dockerCmd = 'cd ' + $APP_DIR + '; sudo docker compose down 2>/dev/null; sudo docker compose up --build -d; sleep 10; curl -sf http://localhost:5000/api/health; echo done'
 Invoke-Expression "$SSH `"$dockerCmd`""
 
 # ── 5. Status ─────────────────────────────────────────
 Write-Host "`n[5/5] Deployment status:" -ForegroundColor Yellow
-Invoke-Expression "$SSH `"cd $APP_DIR && sudo docker compose ps`""
+$statusCmd = 'cd ' + $APP_DIR + '; sudo docker compose ps'
+Invoke-Expression "$SSH `"$statusCmd`""
 
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Green

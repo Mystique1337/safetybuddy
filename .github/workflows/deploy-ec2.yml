@@ -1,0 +1,65 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            APP_DIR="/home/${{ secrets.EC2_USER }}/safetybuddy"
+
+            # ── First-time setup ──
+            if [ ! -d "$APP_DIR" ]; then
+              echo "First deploy — cloning repo..."
+              git clone https://github.com/Mystique1337/safetybuddy.git "$APP_DIR"
+              cd "$APP_DIR"
+
+              # Install Docker if not present
+              if ! command -v docker &> /dev/null; then
+                sudo yum update -y
+                sudo yum install -y docker git
+                sudo systemctl start docker
+                sudo systemctl enable docker
+                sudo usermod -aG docker $USER
+                # Install Docker Compose plugin
+                sudo mkdir -p /usr/local/lib/docker/cli-plugins
+                sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
+                  -o /usr/local/lib/docker/cli-plugins/docker-compose
+                sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+              fi
+
+              echo "⚠️  Set up .env file: nano $APP_DIR/.env"
+            fi
+
+            # ── Pull latest code ──
+            cd "$APP_DIR"
+            echo "Pulling latest changes..."
+            git fetch origin master
+            git reset --hard origin/master
+
+            # ── Rebuild and restart ──
+            echo "Rebuilding Docker image..."
+            docker compose down 2>/dev/null || true
+            docker compose up --build -d
+
+            # ── Health check ──
+            echo "Waiting for app to start..."
+            sleep 8
+            if curl -sf http://localhost:5000/api/health; then
+              echo ""
+              echo "✅ Deploy successful!"
+            else
+              echo "⚠️  App may still be starting — check: docker compose logs"
+            fi

@@ -46,6 +46,11 @@
                                 <strong>YOLO model not found.</strong> Train it using the Colab notebook and save as
                                 <code>data/models/ppe_yolo26n.pt</code>
                             </div>
+                            <div id="liveHttpsWarning" class="alert alert-danger mt-3" style="display:none;">
+                                <i class="bi bi-shield-lock me-2"></i>
+                                <strong>Camera requires HTTPS.</strong> Browsers block camera access over plain HTTP.
+                                Access this page via <code>https://</code> or from <code>localhost</code>.
+                            </div>
                         </div>
 
                         <!-- Live feed (hidden until started) -->
@@ -214,6 +219,18 @@ async function startLiveDetection() {
     const btn = document.getElementById('btnStartLive');
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Starting...';
+
+    // getUserMedia requires HTTPS or localhost
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Camera';
+        const isHttp = location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1';
+        if (isHttp) {
+            document.getElementById('liveHttpsWarning').style.display = 'block';
+        }
+        showToast('Camera access requires HTTPS. Use https:// or access via localhost.', 'danger');
+        return;
+    }
 
     try {
         liveStream = await navigator.mediaDevices.getUserMedia({

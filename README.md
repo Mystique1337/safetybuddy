@@ -1,77 +1,94 @@
 <div align="center">
 
-# 🛡️ SafetyBuddy
+# 🦺 SafetyBuddy
 
-**A multimodal PPE-compliance platform: self-hosted Gemma 4 vision and chat, real-time YOLO26 detection, and a self-improving, citation-grounded RAG over OSHA safety regulation.**
+### AI-powered PPE compliance for industrial sites
 
-[![Live demo](https://img.shields.io/badge/Live-app-16a34a)](https://chidi-ashinze--safetybuddy.modal.run)
-[![Model](https://img.shields.io/badge/Vision%20%26%20chat-Gemma%204-4285F4)](https://huggingface.co/google/gemma-4-E4B-it)
-[![Detector](https://img.shields.io/badge/Real--time-YOLO26-00b894)](https://docs.ultralytics.com/)
-[![Deploy](https://img.shields.io/badge/Serverless-Modal-7c3aed)](https://modal.com/)
+**Catch missing protective equipment in real time, understand exactly what is wrong, and back every answer with the right OSHA standard. All on your own infrastructure.**
+
+[![Live demo](https://img.shields.io/badge/▶_Live_app-FACC15?style=for-the-badge&labelColor=111114)](https://chidi-ashinze--safetybuddy.modal.run)
+
+[![Gemma 4](https://img.shields.io/badge/Vision_&_chat-Gemma_4-4285F4)](https://huggingface.co/google/gemma-4-E4B-it)
+[![YOLO26](https://img.shields.io/badge/Real--time-YOLO26-00B894)](https://docs.ultralytics.com/)
+[![Modal](https://img.shields.io/badge/Serverless_GPU-Modal-7C3AED)](https://modal.com/)
+[![Supabase](https://img.shields.io/badge/Vector_store-Supabase_pgvector-3ECF8E)](https://supabase.com/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Research-blue.svg)](#license)
 
-Built by **Chidi Ashinze** · [GitHub](https://github.com/Mystique1337/safetybuddy)
+`ppe` · `safety` · `osha` · `computer-vision` · `yolo` · `gemma` · `multimodal` · `vlm` · `rag` · `vllm` · `modal` · `supabase` · `pgvector` · `flask`
+
+Built by **Chidi Ashinze** · [GitHub](https://github.com/Mystique1337/safetybuddy) · **[chidi-ashinze--safetybuddy.modal.run](https://chidi-ashinze--safetybuddy.modal.run)**
 
 </div>
 
 ---
 
-## What this is
+## What it is
 
-SafetyBuddy watches industrial scenes for personal-protective-equipment (PPE) compliance and explains what it sees against the rules.
+SafetyBuddy watches industrial scenes for personal protective equipment (PPE) and explains what it sees against the rules. It is built for the people on the ground: safety officers, supervisors, and crews, not engineers. The interface is a bold, hi-vis industrial console, and the AI plumbing stays out of the way.
 
-It pairs two complementary vision paths with a regulation-aware assistant:
+It combines three things:
 
-- **YOLO26** runs locally on CPU and flags missing hard hats, masks, and high-vis vests in live webcam or recorded video, in real time and for free.
-- **Gemma 4** (Google's open, natively multimodal model) does the careful, written inspection of an uploaded photo or a flagged frame, severity-rated and cited to the relevant OSHA standard.
-- A **self-improving RAG** answers compliance questions grounded in OSHA Subpart I (29 CFR 1910.132-138). When local coverage is weak it fetches authoritative sources live (OSHA, NIOSH, EU-OSHA, HSE), ingests them, and re-answers, so the knowledge base keeps growing as the app is used.
+- **Detect.** YOLO26 runs on CPU and flags missing hard hats, hi-vis vests, and masks in a live webcam or recorded video, in real time and for free.
+- **Inspect.** Gemma 4, Google's open natively-multimodal model, writes a careful, severity-rated PPE report for any flagged frame or uploaded photo, cited to the relevant OSHA standard.
+- **Comply.** A self-improving knowledge base answers compliance questions grounded in OSHA Subpart I (29 CFR 1910.132-138). When local coverage is weak it pulls authoritative sources in live (OSHA, NIOSH, EU-OSHA, HSE), learns them, and re-answers, so it gets sharper the more it is used.
 
-Everything runs on the user's own infrastructure: Gemma 4 is served by vLLM on a single Modal GPU (scale-to-zero), and the knowledge base, alerts, and analytics live in a self-hosted Supabase (Postgres + pgvector). There is no dependency on a third-party LLM API.
+Everything runs on your own infrastructure. Gemma 4 is served by vLLM on a single Modal GPU that scales to zero, and the knowledge base, alerts, analytics, and subscribers live in a self-hosted Supabase (Postgres + pgvector). There is no dependency on a third-party LLM API.
 
-Live app: **https://chidi-ashinze--safetybuddy.modal.run**
+> Live app: **https://chidi-ashinze--safetybuddy.modal.run**
 
 ## Features
 
-- **Real-time PPE detection.** YOLO26 NMS-free inference draws compliant (green) and violation (red) boxes on a live webcam feed or an uploaded video, with adjustable FPS target and confidence threshold. Violations are logged as alerts.
-- **Gemma 4 visual inspection.** Upload an inspection photo and get a systematic head-to-toe PPE check (head, eye/face, hand, foot, body, hearing, respiratory, hazards), each finding severity-rated and tied to an OSHA standard, with an overall risk level.
-- **Self-improving, cited RAG.** Hybrid retrieval (dense pgvector plus Postgres full-text, fused with Reciprocal Rank Fusion) over an OSHA knowledge base. Weak coverage triggers a live fetch from authoritative safety domains; a background job keeps enriching after every query. Answers carry source citations and OSHA traceability.
-- **Four assistant modes.** Safety Advisor, Incident Analyst, Compliance Auditor, and a concise real-time Video-Alert mode for flagged frames.
-- **Durable state.** Alerts, usage analytics, and answer feedback persist in Supabase (they survive restarts), and power the dashboard counters.
-- **Cost controlled.** One GPU only (hard-capped), CPU embeddings and CPU YOLO, fast scale-down, scale to zero when idle.
-- **One-command deploy.** GitHub Actions deploys to Modal on every push to master.
+**Live monitoring console**
+- Always-on detection stage with a STANDBY state and a one-tap Start Camera.
+- A HUD viewfinder (yellow corner brackets) and smooth video: a render loop draws the webcam at full frame rate while detections overlay on top.
+- A loud violation moment: the whole stage flashes red, a banner names the missing PPE, an optional alert beep fires, and a one-tap **Explain** runs the AI report on that exact frame.
+- Upload a recorded video and every frame is scanned, with violation snapshots and optional AI analysis.
+
+**Photo inspection**
+- Upload an inspection photo and get a clean **PPE report card**: an At risk / Compliant verdict, a worker count, and a checklist (Hard hat, Hi-vis vest, Mask: OK / Missing / Not detected), with the full AI inspection one click away.
+
+**Safety advisor**
+- Ask any PPE question and get an answer grounded in OSHA regulation with inline citations and source links. Four modes: Safety Advisor, Incident Analyst, Compliance Auditor, and a concise real-time Video Alert mode.
+
+**Dashboard and records**
+- Safety KPIs (Violations today, Violations all time, Inspections run, Questions answered), a live alerts feed, and recent activity, all persisted in Supabase so nothing is lost on restart.
+- An optional, dismissible email capture for product updates (opt-in only, never blocks anything).
+
+**Built to run cheaply**
+- One GPU at most (hard-capped), scale-to-zero when idle, CPU detection and CPU embeddings. You pay for GPU time only while the model is actually answering.
+
+## How it works
+
+**A live frame**
+1. The browser captures a webcam frame, downscales it, and posts it to the server.
+2. YOLO26 detects PPE classes on CPU and returns boxes.
+3. The browser overlays the boxes on the smooth local video; a violation lights the stage red, logs an alert to Supabase, and can run a Gemma 4 explanation.
+
+**A question or photo**
+1. The query is embedded with `nomic-embed-text-v1.5` (CPU) and hybrid-retrieved over Supabase pgvector (dense vectors plus Postgres full-text, fused with Reciprocal Rank Fusion).
+2. If local coverage is weak, authoritative sources are fetched live, cleaned, chunked, embedded, de-duplicated, and re-retrieved.
+3. Gemma 4 (served by vLLM on Modal) answers with inline OSHA citations, or inspects the image and returns a report card.
+4. The turn is logged to Supabase, and a background job keeps growing the knowledge base.
 
 ## Architecture
 
 ```
-Browser ──> Flask web app (Modal, WSGI)
+Browser ──> Flask web app (Modal, WSGI, bold hi-vis UI)
               │
-              ├─ Dashboard  (/)            GET  /api/dashboard     counters + recent alerts (Supabase)
-              │
-              ├─ Chat (/chat)              POST /api/chat          self-improving RAG -> Gemma 4 -> cited answer
-              │                            POST /api/analyze-image YOLO26 boxes + Gemma 4 written inspection
-              │
-              ├─ Monitor (/monitor)
-              │   ├─ Live webcam           POST /api/detect-frame      YOLO26 (CPU), per-frame annotation
-              │   ├─ Video upload          POST /api/process-video     YOLO26 over sampled frames
-              │   └─ Deep analysis         POST /api/analyze-violation Gemma 4 regulatory analysis of a frame
-              │
-              └─ Compliance (/compliance)  static OSHA reference
+              ├─ Dashboard   safety KPIs + alerts feed        (Supabase)
+              ├─ Monitor     YOLO26 (CPU) live + video         -> alerts, AI explain
+              ├─ Chat        self-improving RAG -> Gemma 4      -> cited report card
+              └─ Compliance  OSHA Subpart I reference
 
-   Gemma 4 (vLLM, OpenAI-compatible)  ──  one L4 GPU on Modal, scale-to-zero, bearer-key protected
-   Knowledge base + analytics         ──  self-hosted Supabase (Postgres + pgvector), schema "safety_buddy"
-   Embeddings                         ──  nomic-embed-text-v1.5 on CPU, in the web container
+   Gemma 4 (vLLM, OpenAI-compatible)  ── one L4 GPU on Modal, scale-to-zero, bearer-key protected
+   Knowledge base + analytics + subs  ── self-hosted Supabase (Postgres + pgvector), schema safety_buddy
+   Embeddings                         ── nomic-embed-text-v1.5 on CPU, in the web container
 ```
-
-### How a chat query flows
-
-1. Embed the query with `nomic-embed-text-v1.5` (CPU) and run hybrid retrieval over Supabase pgvector (dense vectors plus full-text, fused with RRF).
-2. Score local coverage. If the top similarity is below `RAG_COVERAGE_THRESHOLD` or there are too few hits, fetch authoritative sources live (Tavily search biased to safety domains, or the curated seed list), clean them (trafilatura for HTML, PyMuPDF for PDF), chunk, embed, upsert with SHA-256 dedup, then re-retrieve.
-3. Gemma 4, served by vLLM on Modal, answers in the requested mode with inline OSHA citations.
-4. The turn is logged to Supabase analytics, and a background thread tops the knowledge base up for next time.
 
 ### Stack
 
-`Modal` (serverless GPU) · `vLLM` · `Gemma 4` (E4B, multimodal) · `YOLO26` / Ultralytics · `Flask` (WSGI) · self-hosted `Supabase` + `pgvector` · `nomic-embed-text-v1.5` · `trafilatura` / `PyMuPDF` · optional `Tavily`.
+`Modal` (serverless GPU) · `vLLM` · `Gemma 4` (E4B, multimodal) · `YOLO26` / Ultralytics · `Flask` (WSGI) · self-hosted `Supabase` + `pgvector` · `nomic-embed-text-v1.5` · `trafilatura` / `PyMuPDF` · optional `Tavily` · `Bootstrap 5` + custom industrial CSS.
 
 ## Repository layout
 
@@ -91,18 +108,18 @@ safetybuddy/
 │   │   ├── embeddings.py       nomic embeddings (CPU)
 │   │   ├── vectorstore.py      pgvector hybrid search + chunk upserts
 │   │   ├── retriever.py        coverage-gated, self-improving retrieval
-│   │   ├── web_ingest.py       fetch -> clean -> chunk -> embed -> upsert (dedup/TTL)
+│   │   ├── web_ingest.py       fetch -> clean -> chunk -> embed -> upsert
 │   │   ├── sources.py          curated authoritative sources + web-search bias
 │   │   └── chains.py           four RAG chat modes (Gemma 4)
 │   ├── compliance/             OSHA regulation registry + response auto-tagging
-│   ├── storage/db.py           alerts / usage / feedback (Supabase, in-memory fallback)
-│   └── ui/                      Flask factory, routes, templates, static
-├── supabase/schema.sql     pgvector KB + hybrid_search RPCs + analytics tables (safety_buddy schema)
+│   ├── storage/db.py           alerts / usage / feedback / subscribers (Supabase + in-memory fallback)
+│   └── ui/                      Flask factory, routes, templates, static (industrial design system)
+├── supabase/schema.sql     pgvector KB + hybrid_search RPCs + analytics + subscribers (safety_buddy schema)
 ├── scripts/
 │   ├── setup_supabase.sh       apply schema.sql
 │   ├── setup_modal_secret.sh   build the Modal secret from .env
-│   └── seed_kb.py              seed the KB with curated authoritative sources
-├── notebooks/train_yolo_ppe.py Colab training script for the YOLO26 detector
+│   ├── seed_kb.py              seed the KB with curated authoritative sources
+│   └── export_subscribers.py   export opt-in emails to CSV
 ├── .github/workflows/deploy-modal.yml   CI/CD: deploy to Modal on push to master
 ├── .env.example
 └── requirements.txt
@@ -115,100 +132,81 @@ git clone https://github.com/Mystique1337/safetybuddy.git
 cd safetybuddy
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env            # fill in the values below
-```
-
-The app boots with no database (in-memory state, empty knowledge base) so the UI works immediately:
-
-```bash
+cp .env.example .env            # fill in the values (see Configuration)
 python run.py                   # http://localhost:6768
 ```
 
-For the full experience locally, point `.env` at your Supabase and a Gemma endpoint (a local vLLM, or the deployed Modal URL), then seed the knowledge base:
+The app boots with no database (in-memory state, empty knowledge base), so the UI works immediately. For the full experience, point `.env` at your Supabase and a Gemma endpoint, then seed the knowledge base:
 
 ```bash
 bash scripts/setup_supabase.sh  # create the safety_buddy schema
 python scripts/seed_kb.py       # fetch + embed the curated OSHA sources
-# (optional) also ingest the bundled local OSHA files:
-python ingest.py
+python ingest.py                # (optional) also ingest the bundled local OSHA files
 ```
 
-## Self-hosted Supabase setup
+## Self-hosted Supabase
 
-SafetyBuddy keeps all of its tables in their own Postgres schema (`SUPABASE_DB_SCHEMA`, default `safety_buddy`) so they never collide with other apps on the same instance.
+Every SafetyBuddy table lives in its own Postgres schema (`SUPABASE_DB_SCHEMA`, default `safety_buddy`) so it never collides with other apps on the same instance.
 
 ```bash
-# .env: set SUPABASE_DB_URL to your direct Postgres connection string
-bash scripts/setup_supabase.sh
-# or paste supabase/schema.sql into the Supabase SQL editor
+# set SUPABASE_DB_URL in .env, then:
+bash scripts/setup_supabase.sh   # or paste supabase/schema.sql into the Supabase SQL editor
 ```
 
-This creates `kb_chunks` (HNSW + full-text indexed), the `match_chunks` / `hybrid_search` / `kb_stats` functions, `kb_sources` (dedup + freshness), and the `events` / `alerts` / `feedback` analytics tables, all in `safety_buddy`. The embedding dimension is 768 (nomic); change every `vector(768)` if you switch `EMBED_MODEL`.
+This creates `kb_chunks` (HNSW + full-text indexed), the `match_chunks` / `hybrid_search` / `kb_stats` functions, `kb_sources` (dedup + freshness), and the `events` / `alerts` / `feedback` / `subscribers` tables. The embedding dimension is 768 (nomic); change every `vector(768)` if you switch `EMBED_MODEL`.
 
 ## Deploy to Modal
 
 The whole app (Gemma 4 GPU service + Flask web) is one `modal_app.py`.
 
 ```bash
-# 1. Authenticate (uses the chidi-ashinze workspace)
 modal profile activate chidi-ashinze
-
-# 2. Push runtime config (.env) into a Modal secret
-bash scripts/setup_modal_secret.sh        # creates "safetybuddy-secrets"
-
-# 3. Deploy
+bash scripts/setup_modal_secret.sh        # create the secret bundle from .env
 modal deploy modal_app.py
 #   web:   https://chidi-ashinze--safetybuddy.modal.run
 #   gemma: https://chidi-ashinze--safetybuddy-gemma.modal.run/v1  (vLLM, bearer-key protected)
-
-# 4. Seed the knowledge base on the deployed infra (uses the same secret)
-modal run modal_app.py::seed
+modal run modal_app.py::seed              # seed the KB on the deployed infra
 ```
 
-`gemma` serves Gemma 4 (E4B) on a single L4 GPU and scales to zero when idle; the web container resolves its URL automatically and injects it as `LLM_BASE_URL`. To use a higher-quality variant, set `MODEL_REPO=google/gemma-4-26B-A4B-it`, `LLM_GPU=A100`, and matching `VISION_MODEL` / `CHAT_MODEL`.
+`gemma` serves Gemma 4 (E4B) on a single L4 GPU and scales to zero when idle; the web container resolves its URL automatically and injects it as `LLM_BASE_URL`. For a higher-quality variant set `MODEL_REPO=google/gemma-4-26B-A4B-it`, `LLM_GPU=A100`, and matching `VISION_MODEL` / `CHAT_MODEL`.
+
+**Deploy note.** The web app is a long-lived WSGI process that imports the code once at container start, so a plain redeploy may keep serving old code from a warm container. If a change does not seem to go live, force a clean restart:
+
+```bash
+modal app stop safetybuddy --yes && modal deploy modal_app.py
+```
 
 ### CI/CD
 
-`.github/workflows/deploy-modal.yml` deploys on every push to master. Add two repository secrets (Settings -> Secrets and variables -> Actions): `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` for the target workspace. Runtime config stays in the Modal `safetybuddy-secrets` bundle, so CI never sees `.env`.
+`.github/workflows/deploy-modal.yml` deploys on every push to master. Add two repository secrets: `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`. Runtime config stays in the Modal `safetybuddy-secrets` bundle, so CI never sees `.env`.
 
 ## Configuration
 
-All settings live in `.env` (see `.env.example` for the full list). The essentials:
+All settings live in `.env` (see `.env.example`). The essentials:
 
 | Variable | Purpose |
 |---|---|
-| `MODEL_REPO` / `LLM_GPU` | Gemma 4 variant served by vLLM and its GPU (`google/gemma-4-E4B-it` on `L4`). |
-| `LLM_BASE_URL` / `LLM_API_KEY` | Gemma OpenAI-compatible endpoint and its bearer key (set automatically on Modal). |
+| `MODEL_REPO` / `LLM_GPU` | Gemma 4 variant and its GPU (`google/gemma-4-E4B-it` on `L4`). |
+| `LLM_BASE_URL` / `LLM_API_KEY` | Gemma OpenAI-compatible endpoint and its bearer key (auto-set on Modal). |
 | `VISION_MODEL` / `CHAT_MODEL` | Model names the app requests (must match what vLLM serves). |
 | `SUPABASE_DB_URL` / `SUPABASE_DB_SCHEMA` | Direct Postgres URL and the dedicated schema (`safety_buddy`). |
 | `EMBED_MODEL` / `EMBED_DIM` | Embedding model and dimension (`nomic-embed-text-v1.5`, 768). |
 | `RAG_COVERAGE_THRESHOLD` / `RAG_MIN_CHUNKS` | When to consider local coverage weak and fetch live. |
 | `RAG_ALWAYS_ENRICH` / `RAG_ENRICH_MAX_URLS` / `RAG_DOC_TTL_DAYS` | Background enrichment, sources per weak query, refresh interval. |
-| `TAVILY_API_KEY` | Optional live web search biased to authoritative safety domains (falls back to curated seeds). |
+| `TAVILY_API_KEY` | Optional live web search biased to authoritative safety domains. |
 
 ## API reference
 
-`POST /api/chat`, `POST /api/analyze-image`, `POST /api/process-video`, `POST /api/detect-frame`, `POST /api/analyze-violation`, `POST /api/feedback`, `GET /api/dashboard`, `GET /api/alerts`, `GET /api/kb/stats`, `GET /api/model-status`, `GET /api/health`.
-
-## Knowledge base and the self-improving RAG
-
-The knowledge base starts from the curated authoritative sources in `src/rag/sources.py` (OSHA 1910.132-138, OSHA PPE and respiratory protection, EU-OSHA, HSE, NIOSH/Wikipedia) plus the bundled local OSHA files. From there it grows on its own: weak queries pull fresh authoritative pages in, and a background job keeps topping it up. `kb_sources` tracks every ingested URL with a content hash and timestamp, so sources are de-duplicated and re-fetched only after `RAG_DOC_TTL_DAYS`.
-
-## Training the detector
-
-The PPE detector ships with the repo (`data/models/ppe_yolo26n.pt`). To retrain on the [construction-site safety dataset](https://www.kaggle.com/datasets/snehilsanyal/construction-site-safety-image-dataset-roboflow), run `notebooks/train_yolo_ppe.py` on a free Colab T4 and drop the resulting weights at `data/models/ppe_yolo26n.pt`.
+`POST /api/chat` · `POST /api/analyze-image` · `POST /api/process-video` · `POST /api/detect-frame` · `POST /api/analyze-violation` · `POST /api/feedback` · `POST /api/subscribe` · `GET /api/dashboard` · `GET /api/alerts` · `GET /api/kb/stats` · `GET /api/model-status` · `GET /api/health`
 
 ## Cost
 
 | Component | Cost |
 |---|---|
 | Gemma 4 (E4B) on Modal L4 | Pay-per-second, scales to zero when idle |
-| YOLO26 inference | Free (CPU, in the web container) |
-| nomic embeddings | Free (CPU) |
+| YOLO26 detection + nomic embeddings | Free (CPU, in the web container) |
 | Supabase (self-hosted) | Your own infrastructure |
 | Web container | Pennies; scales to zero |
-
-One GPU at most, idle to zero: you pay for GPU time only while Gemma is actually answering.
 
 ## License
 

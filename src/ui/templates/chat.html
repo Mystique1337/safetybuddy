@@ -10,26 +10,23 @@
         <div class="card flex-grow-1 mb-3">
             <div class="card-body chat-messages" id="chatMessages">
                 <div class="chat-welcome text-center py-5">
-                    <div class="welcome-mark">🛡️</div>
-                    <h4 class="fw-bold">Welcome to <span class="text-gradient">SafetyBuddy</span></h4>
-                    <p class="text-muted">Ask any PPE compliance question, upload an inspection image, or describe a safety situation.</p>
-                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
-                            data-query="What PPE is required for transferring concentrated sulfuric acid?">
-                            🧪 Chemical PPE
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
-                            data-query="What are OSHA requirements for hard hat inspections?">
-                            ⛑️ Hard hat inspections
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
-                            data-query="We have no written hazard assessment. What is our compliance status?">
-                            📋 Compliance audit
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm suggestion-btn"
-                            data-query="A worker got chemical burns handling solvents with nitrile gloves. Analyze.">
-                            🚨 Incident analysis
-                        </button>
+                    <div class="welcome-orb"><div class="orb-core"><i class="bi bi-shield-shaded"></i></div></div>
+                    <h4 class="fw-bold mb-1">Welcome to <span class="text-gradient">SafetyBuddy</span></h4>
+                    <p class="text-muted">Your AI partner for PPE compliance. Ask a question, upload an inspection
+                       photo, or describe a safety situation.</p>
+                    <div class="suggestion-row">
+                        <div class="suggestion-tile suggestion-btn" data-query="What PPE is required for transferring concentrated sulfuric acid?">
+                            <span class="st-ic bg-success-subtle"><i class="bi bi-droplet-half text-success"></i></span> Chemical PPE selection
+                        </div>
+                        <div class="suggestion-tile suggestion-btn" data-query="What are OSHA requirements for hard hat inspections?">
+                            <span class="st-ic bg-primary-subtle"><i class="bi bi-shield-shaded text-primary"></i></span> Hard hat inspections
+                        </div>
+                        <div class="suggestion-tile suggestion-btn" data-query="We have no written hazard assessment. What is our compliance status?">
+                            <span class="st-ic bg-info-subtle"><i class="bi bi-clipboard-check text-info"></i></span> Compliance audit
+                        </div>
+                        <div class="suggestion-tile suggestion-btn" data-query="A worker got chemical burns handling solvents with nitrile gloves. Analyze.">
+                            <span class="st-ic bg-danger-subtle"><i class="bi bi-exclamation-octagon text-danger"></i></span> Incident analysis
+                        </div>
                     </div>
                 </div>
             </div>

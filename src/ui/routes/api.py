@@ -7,6 +7,7 @@ self-hosted Supabase via src/storage/db.py, which transparently falls back to an
 in-memory store when no database is configured.
 """
 import os
+import re
 import base64
 import uuid
 import threading
@@ -17,6 +18,8 @@ from src.config import settings
 from src.storage import db as store_db
 
 api_bp = Blueprint("api", __name__)
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # ── Chat Endpoint ──────────────────────────────────────────
@@ -377,6 +380,20 @@ def feedback():
         answer=data.get("answer"),
     )
     return jsonify({"status": "ok"})
+
+
+# ── Optional email capture (product updates) ───────────────
+
+@api_bp.route("/subscribe", methods=["POST"])
+def subscribe():
+    """Store an opt-in email for product updates. Always optional."""
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip()
+    if not _EMAIL_RE.match(email) or len(email) > 254:
+        return jsonify({"error": "Please enter a valid email address."}), 400
+    if store_db.subscribe(email, wants_updates=True, source=data.get("source", "footer")):
+        return jsonify({"status": "ok"})
+    return jsonify({"error": "Could not save right now, please try again later."}), 500
 
 
 # ── Dashboard Data ─────────────────────────────────────────

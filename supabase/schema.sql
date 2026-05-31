@@ -182,3 +182,12 @@ CREATE TABLE IF NOT EXISTS feedback (
     answer      TEXT,
     created_at  TIMESTAMPTZ DEFAULT now()
 );
+
+-- subscribers : optional email capture (product updates). Always opt-in.
+CREATE TABLE IF NOT EXISTS subscribers (
+    id            BIGSERIAL PRIMARY KEY,
+    email         TEXT UNIQUE NOT NULL,
+    wants_updates BOOLEAN DEFAULT TRUE,
+    source        TEXT,
+    created_at    TIMESTAMPTZ DEFAULT now()
+);

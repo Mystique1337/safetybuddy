@@ -64,6 +64,21 @@
         </div>
     </main>
 
+    <!-- Optional product-updates capture (dismissible, always opt-in) -->
+    <div id="subscribeCard" class="subscribe-card" style="display:none;">
+        <button class="sub-close" onclick="dismissSubscribe()" aria-label="Dismiss">&times;</button>
+        <div class="sub-icon"><i class="bi bi-envelope-paper"></i></div>
+        <div class="sub-content">
+            <strong>Stay in the loop</strong>
+            <p>Occasional SafetyBuddy updates. No spam, opt out anytime.</p>
+            <form id="subscribeForm" class="sub-form" onsubmit="return submitSubscribe(event)">
+                <input type="email" id="subscribeEmail" class="form-control form-control-sm" placeholder="you@company.com" required>
+                <button type="submit" class="btn btn-primary btn-sm" id="subscribeBtn">Notify me</button>
+            </form>
+            <div id="subscribeMsg" class="sub-msg"></div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 

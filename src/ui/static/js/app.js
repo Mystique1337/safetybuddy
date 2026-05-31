@@ -102,3 +102,42 @@ function showToast(message, type = 'info') {
 
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
+
+// ── Optional product-updates capture ─────
+function showSubscribe() {
+    if (localStorage.getItem('sb_sub')) return;   // already dismissed or subscribed
+    const card = document.getElementById('subscribeCard');
+    if (!card) return;
+    setTimeout(() => { card.style.display = 'flex'; requestAnimationFrame(() => card.classList.add('show')); }, 9000);
+}
+
+function dismissSubscribe() {
+    const card = document.getElementById('subscribeCard');
+    localStorage.setItem('sb_sub', 'dismissed');
+    if (card) { card.classList.remove('show'); setTimeout(() => { card.style.display = 'none'; }, 250); }
+}
+
+async function submitSubscribe(e) {
+    e.preventDefault();
+    const email = document.getElementById('subscribeEmail').value.trim();
+    const btn = document.getElementById('subscribeBtn');
+    const msg = document.getElementById('subscribeMsg');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/subscribe', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, source: 'footer' }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Something went wrong');
+        msg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Thanks, you are on the list.</span>';
+        localStorage.setItem('sb_sub', 'done');
+        setTimeout(dismissSubscribe, 2200);
+    } catch (err) {
+        msg.innerHTML = '<span class="text-danger">' + err.message + '</span>';
+        btn.disabled = false;
+    }
+    return false;
+}
+
+showSubscribe();

@@ -15,7 +15,7 @@ from src.config import settings
 from src.db import get_pool
 
 # In-memory fallback (used only when no database is configured).
-_mem = {"events": [], "alerts": [], "feedback": []}
+_mem = {"events": [], "alerts": [], "feedback": [], "subscribers": []}
 _mem_seq = {"n": 0}
 _mem_lock = threading.Lock()
 
@@ -109,6 +109,32 @@ def log_feedback(message_id: str | None, rating: int, comment: str | None = None
             )
     except Exception as e:
         print(f"Warning: log_feedback failed ({e}).")
+
+
+def subscribe(email: str, wants_updates: bool = True, source: str | None = None) -> bool:
+    """Store an opt-in email for product updates. Idempotent on email."""
+    email = (email or "").strip().lower()
+    if not email:
+        return False
+    if not settings.db_enabled:
+        row = {"id": _next_id(), "email": email, "wants_updates": wants_updates,
+               "source": source, "created_at": _now_iso()}
+        with _mem_lock:
+            if not any(s["email"] == email for s in _mem["subscribers"]):
+                _mem["subscribers"].append(row)
+        return True
+    try:
+        pool = get_pool()
+        with pool.connection() as conn:
+            conn.execute(
+                "INSERT INTO subscribers (email, wants_updates, source) VALUES (%s, %s, %s) "
+                "ON CONFLICT (email) DO UPDATE SET wants_updates = EXCLUDED.wants_updates",
+                (email, wants_updates, source),
+            )
+        return True
+    except Exception as e:
+        print(f"Warning: subscribe failed ({e}).")
+        return False
 
 
 # --------------------------------------------------------------------------- #

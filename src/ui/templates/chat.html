@@ -166,7 +166,7 @@ async function analyzeImage() {
     const btn = document.getElementById('btnAnalyzeImage');
     const status = document.getElementById('imageAnalysisStatus');
     btn.disabled = true;
-    status.innerHTML = '<small class="text-warning"><i class="bi bi-hourglass-split"></i> Analyzing with GPT-4o Vision...</small>';
+    status.innerHTML = '<small class="text-warning"><i class="bi bi-hourglass-split"></i> Analyzing with Gemma 4 Vision...</small>';
 
     try {
         const formData = new FormData();
@@ -219,7 +219,7 @@ async function analyzeImage() {
                 </div>` + marked.parse(data.analysis);
             appendMessage('assistant', richHtml, true);
         } else {
-            // No YOLO available — just show GPT-4o text
+            // No YOLO available — just show Gemma 4 text
             appendMessage('assistant', data.analysis);
         }
     } catch (e) {

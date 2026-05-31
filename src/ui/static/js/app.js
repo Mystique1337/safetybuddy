@@ -40,7 +40,7 @@ async function checkHealth() {
 
         if (data.status === 'healthy') {
             dot.className = 'status-dot online';
-            label.textContent = data.openai_key_set ? 'API Connected' : 'API Key Missing';
+            label.textContent = data.llm_endpoint_configured ? 'Gemma 4 Connected' : 'Model Offline';
         } else {
             dot.className = 'status-dot offline';
             label.textContent = 'API Error';

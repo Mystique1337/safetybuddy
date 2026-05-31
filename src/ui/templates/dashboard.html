@@ -5,22 +5,59 @@
 {% block content %}
 <!-- Hero -->
 <section class="hero">
-    <h1>Spot every PPE hazard, <span class="text-gradient">before it becomes an incident.</span></h1>
-    <p>SafetyBuddy pairs real-time YOLO26 detection with Gemma 4 vision and a self-improving,
-       citation-grounded knowledge base of OSHA regulation, all on your own infrastructure.</p>
-    <div class="hero-pills">
-        <span class="hero-pill" id="modelPill"><span class="status-dot online"></span> Gemma 4 vision</span>
-        <span class="hero-pill"><i class="bi bi-camera-video text-info"></i> YOLO26 real-time</span>
-        <span class="hero-pill"><i class="bi bi-database-check text-success"></i> <b id="kbChunks">—</b>&nbsp;KB passages</span>
-        <span class="hero-pill"><i class="bi bi-arrow-repeat text-warning"></i> Self-improving RAG</span>
-    </div>
-    <div class="hero-actions">
-        <a href="/monitor" class="btn btn-gradient btn-lg"><i class="bi bi-broadcast me-2"></i>Start live monitoring</a>
-        <a href="/chat" class="btn btn-outline-light-soft btn-lg"><i class="bi bi-chat-dots me-2"></i>Ask SafetyBuddy</a>
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <h1>Spot every PPE hazard, <span class="text-gradient">before it becomes an incident.</span></h1>
+            <p>SafetyBuddy pairs real-time YOLO26 detection with Gemma 4 vision and a self-improving,
+               citation-grounded knowledge base of OSHA regulation, all on your own infrastructure.</p>
+            <div class="hero-pills">
+                <span class="hero-pill" id="modelPill"><span class="status-dot online"></span> Gemma 4 vision</span>
+                <span class="hero-pill"><i class="bi bi-camera-video text-info"></i> YOLO26 real-time</span>
+                <span class="hero-pill"><i class="bi bi-database-check text-success"></i> <b id="kbChunks">—</b>&nbsp;KB passages</span>
+                <span class="hero-pill"><i class="bi bi-arrow-repeat text-warning"></i> Self-improving RAG</span>
+            </div>
+            <div class="hero-actions">
+                <a href="/monitor" class="btn btn-gradient btn-lg"><i class="bi bi-broadcast me-2"></i>Start live monitoring</a>
+                <a href="/chat" class="btn btn-outline-light-soft btn-lg"><i class="bi bi-chat-dots me-2"></i>Ask SafetyBuddy</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="scan-card">
+                <div class="scan-figure"><i class="bi bi-person-bounding-box"></i></div>
+                <div class="scan-line"></div>
+                <span class="det-chip det-ok" style="top:15%; left:9%;"><i class="bi bi-check-circle-fill"></i> Hard hat</span>
+                <span class="det-chip det-ok" style="top:45%; right:8%;"><i class="bi bi-check-circle-fill"></i> Safety vest</span>
+                <span class="det-chip det-bad" style="bottom:14%; left:13%;"><i class="bi bi-x-circle-fill"></i> No mask</span>
+            </div>
+        </div>
     </div>
 </section>
 
+<!-- How it works -->
+<div class="section-title">How SafetyBuddy works</div>
+<div class="how-grid mb-4">
+    <div class="how-step">
+        <span class="how-num">1</span>
+        <div class="how-ic g-amber"><i class="bi bi-camera-reels"></i></div>
+        <b>Detect</b>
+        <p>YOLO26 scans webcam or video in real time and flags missing hard hats, vests and masks.</p>
+    </div>
+    <div class="how-step">
+        <span class="how-num">2</span>
+        <div class="how-ic g-blue"><i class="bi bi-stars"></i></div>
+        <b>Inspect</b>
+        <p>Gemma 4 vision writes a head-to-toe, severity-rated PPE report for any flagged frame or uploaded photo.</p>
+    </div>
+    <div class="how-step">
+        <span class="how-num">3</span>
+        <div class="how-ic g-violet"><i class="bi bi-clipboard2-check"></i></div>
+        <b>Comply</b>
+        <p>Answers are grounded in OSHA regulation with citations, from a knowledge base that grows as you use it.</p>
+    </div>
+</div>
+
 <!-- Stats -->
+<div class="section-title">Live activity</div>
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
         <div class="stat-card">
@@ -49,7 +86,7 @@
 </div>
 
 <!-- Quick actions -->
-<h6 class="text-muted text-uppercase mb-2" style="letter-spacing:.06em; font-size:.78rem;">Quick actions</h6>
+<div class="section-title">Quick actions</div>
 <div class="action-grid mb-4">
     <a href="/chat" class="action-card card-hover">
         <div class="ac-icon g-blue"><i class="bi bi-chat-square-text"></i></div>

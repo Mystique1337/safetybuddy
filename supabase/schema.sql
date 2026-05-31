@@ -121,3 +121,46 @@ SET search_path = safety_buddy, public AS $$
            (SELECT count(DISTINCT doc_type) FROM kb_chunks),
            (SELECT max(created_at) FROM kb_chunks);
 $$;
+
+-- ===========================================================================
+-- Runtime analytics + alerts + feedback (replace the old in-memory store)
+-- ===========================================================================
+
+-- events : usage analytics; also powers the dashboard counters.
+-- kind = 'chat' | 'image' | 'video' | 'live_frame'. For 'video' the processed
+-- frame count is kept in metadata->>'frames' (per-frame rows would be too chatty).
+CREATE TABLE IF NOT EXISTS events (
+    id          BIGSERIAL PRIMARY KEY,
+    kind        TEXT NOT NULL,
+    mode        TEXT,                 -- chat mode: advisor/incident/compliance/video_alert
+    query       TEXT,
+    tokens      INT,
+    metadata    JSONB DEFAULT '{}'::jsonb,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_events_kind    ON events (kind);
+CREATE INDEX IF NOT EXISTS idx_events_created ON events (created_at);
+
+-- alerts : PPE violations surfaced to the dashboard feed.
+CREATE TABLE IF NOT EXISTS alerts (
+    id          BIGSERIAL PRIMARY KEY,
+    source      TEXT,                 -- 'live' | 'video' | 'image'
+    severity    TEXT,                 -- 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+    summary     TEXT,                 -- comma-joined violation class names
+    time_label  TEXT,                 -- '12.5s' (video) or 'HH:MM:SS' (live)
+    metadata    JSONB DEFAULT '{}'::jsonb,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts (created_at);
+
+-- feedback : thumbs up/down on answers, stored with the full exchange so it is
+-- usable as preference data later.
+CREATE TABLE IF NOT EXISTS feedback (
+    id          BIGSERIAL PRIMARY KEY,
+    message_id  TEXT,
+    rating      SMALLINT,             -- 1 = up, -1 = down
+    comment     TEXT,
+    query       TEXT,
+    answer      TEXT,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);

@@ -1,28 +1,22 @@
 """
 SafetyBuddy — REST API routes.
-Handles chat, image analysis, video processing, and dashboard data.
+Handles chat, image analysis, video processing, alerts, and dashboard data.
+
+Runtime state (usage events, PPE violation alerts, feedback) is persisted to
+self-hosted Supabase via src/storage/db.py, which transparently falls back to an
+in-memory store when no database is configured.
 """
 import os
-import io
 import base64
 import uuid
-import time
-import json
+import threading
 from datetime import datetime
 from flask import Blueprint, request, jsonify, current_app
 
+from src.config import settings
+from src.storage import db as store_db
+
 api_bp = Blueprint("api", __name__)
-
-# In-memory session store (replace with Redis/DB for production)
-_session_store = {
-    "messages": [],
-    "alerts": [],
-    "stats": {"queries": 0, "images_analyzed": 0, "video_frames": 0, "violations": 0},
-}
-
-
-def _get_store():
-    return _session_store
 
 
 # ── Chat Endpoint ──────────────────────────────────────────
@@ -44,9 +38,6 @@ def chat():
     if not user_query:
         return jsonify({"error": "Message is required"}), 400
 
-    store = _get_store()
-    store["stats"]["queries"] += 1
-
     try:
         result = query_safetybuddy(
             user_query,
@@ -58,7 +49,6 @@ def chat():
         )
         compliance = enrich_with_compliance(user_query, result["response"], image_desc)
 
-        # Store message
         msg = {
             "id": str(uuid.uuid4()),
             "timestamp": datetime.now().isoformat(),
@@ -70,8 +60,8 @@ def chat():
             "mode": mode,
             "tokens_used": result["tokens_used"],
         }
-        store["messages"].append(msg)
-
+        store_db.log_event(kind="chat", mode=mode, query=user_query,
+                           tokens=result["tokens_used"])
         return jsonify(msg)
 
     except Exception as e:
@@ -82,12 +72,10 @@ def chat():
 
 @api_bp.route("/analyze-image", methods=["POST"])
 def analyze_image_endpoint():
-    """Analyze an uploaded image for PPE compliance (GPT-4o + optional YOLO annotations)."""
+    """Analyze an uploaded image for PPE compliance (Gemma 4 + optional YOLO annotations)."""
     from src.vision.image_analyzer import analyze_image
 
-    store = _get_store()
     img_b64 = None
-
     try:
         if "image" in request.files:
             file = request.files["image"]
@@ -104,9 +92,9 @@ def analyze_image_endpoint():
         if request.form:
             context = request.form.get("context", "")
 
-        # --- GPT-4o vision analysis ---
+        # --- Gemma 4 vision analysis ---
         result = analyze_image(img_b64, additional_context=context, is_base64=True)
-        store["stats"]["images_analyzed"] += 1
+        store_db.log_event(kind="image", tokens=result["tokens_used"])
 
         # --- YOLO26 annotation pass (if model available) ---
         annotated_b64 = None
@@ -120,7 +108,8 @@ def analyze_image_endpoint():
                 nparr = np.frombuffer(raw_bytes, np.uint8)
                 frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 if frame is not None:
-                    analysis = detector.detect_frame(frame)
+                    with _detector_lock:
+                        analysis = detector.detect_frame(frame)
                     _, buf = cv2.imencode(".jpg", analysis.annotated_frame,
                                           [cv2.IMWRITE_JPEG_QUALITY, 90])
                     annotated_b64 = base64.b64encode(buf).decode()
@@ -132,8 +121,13 @@ def analyze_image_endpoint():
                         }
                         for d in analysis.detections
                     ]
+                    if analysis.has_violations:
+                        vnames = [d.class_name for d in analysis.detections if d.is_violation]
+                        store_db.log_alert(source="image", severity="HIGH",
+                                           summary=", ".join(vnames),
+                                           time_label=datetime.now().strftime("%H:%M:%S"))
         except Exception:
-            pass  # YOLO is optional — GPT-4o analysis still returns
+            pass  # YOLO is optional — Gemma analysis still returns
 
         return jsonify({
             "analysis": result["analysis"],
@@ -155,9 +149,7 @@ def analyze_image_endpoint():
 def process_video():
     """Process an uploaded video for PPE violations frame-by-frame."""
     import cv2
-    import numpy as np
 
-    store = _get_store()
     project_root = current_app.config["PROJECT_ROOT"]
     model_path = os.path.join(project_root, "data", "models", "ppe_yolo26n.pt")
 
@@ -195,27 +187,27 @@ def process_video():
                 continue
 
             analysis = detector.detect_frame(frame)
-            store["stats"]["video_frames"] += 1
 
             if analysis.has_violations:
                 vnames = [d.class_name for d in analysis.detections if d.is_violation]
+                time_label = f"{frame_idx / fps:.1f}s"
                 violations.append({
                     "frame": frame_idx,
                     "time_sec": round(frame_idx / fps, 1),
                     "violations": vnames,
                     "thumbnail": detector.frame_to_base64(analysis.annotated_frame),
                 })
-                store["stats"]["violations"] += 1
-                store["alerts"].append({
-                    "id": str(uuid.uuid4()),
-                    "time": f"{frame_idx / fps:.1f}s",
-                    "summary": ", ".join(vnames),
-                    "severity": "HIGH",
-                    "timestamp": datetime.now().isoformat(),
-                    "source": "video",
-                })
+                store_db.log_alert(source="video", severity="HIGH",
+                                   summary=", ".join(vnames), time_label=time_label,
+                                   meta={"frame": frame_idx})
 
         cap.release()
+
+        # One usage event per processed video (carries the frame count for stats).
+        store_db.log_event(kind="video", meta={
+            "frames": detector.total_frames_processed,
+            "violations": len(violations),
+        })
 
         return jsonify({
             "total_frames": total_frames,
@@ -236,6 +228,7 @@ def process_video():
 
 # Cache the detector so we don't reload the model every frame
 _live_detector = None
+_detector_lock = threading.Lock()
 
 
 def _get_live_detector():
@@ -272,7 +265,6 @@ def detect_frame():
         return jsonify({"error": "YOLO model not found at data/models/ppe_yolo26n.pt"}), 404
 
     detector.conf_threshold = conf
-    store = _get_store()
 
     try:
         # Decode base64 JPEG → numpy array
@@ -283,9 +275,9 @@ def detect_frame():
         if frame is None:
             return jsonify({"error": "Could not decode frame"}), 400
 
-        # Run YOLO26
-        analysis = detector.detect_frame(frame)
-        store["stats"]["video_frames"] += 1
+        # Run YOLO26 (thread-safe to prevent crash on concurrent requests)
+        with _detector_lock:
+            analysis = detector.detect_frame(frame)
 
         # Encode annotated frame back to base64 JPEG
         _, buf = cv2.imencode(".jpg", analysis.annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
@@ -301,18 +293,14 @@ def detect_frame():
                 "bbox": d.bbox,
             })
 
-        # Log violations
-        if analysis.has_violations:
-            store["stats"]["violations"] += 1
+        # Log violations — throttled to the detector's alert cooldown so the live
+        # stream does not insert a near-duplicate alert on every frame.
+        if analysis.has_violations and detector.should_trigger_alert():
             vnames = [d.class_name for d in analysis.detections if d.is_violation]
-            store["alerts"].append({
-                "id": str(uuid.uuid4()),
-                "time": datetime.now().strftime("%H:%M:%S"),
-                "summary": ", ".join(vnames),
-                "severity": "HIGH",
-                "timestamp": datetime.now().isoformat(),
-                "source": "live",
-            })
+            store_db.log_alert(source="live", severity="HIGH",
+                               summary=", ".join(vnames),
+                               time_label=datetime.now().strftime("%H:%M:%S"))
+            detector.mark_alert_sent()
 
         return jsonify({
             "annotated_frame": annotated_b64,
@@ -337,11 +325,11 @@ def model_status():
     return jsonify({"available": os.path.exists(model_path)})
 
 
-# ── GPT-4o Deep Analysis of Video Violation ────────────────
+# ── Gemma 4 Deep Analysis of Video Violation ───────────────
 
 @api_bp.route("/analyze-violation", methods=["POST"])
 def analyze_violation():
-    """Run GPT-4o deep analysis on a specific video violation frame."""
+    """Run Gemma 4 deep analysis on a specific video violation frame."""
     from src.rag.chains import query_safetybuddy
     from src.compliance.mapper import enrich_with_compliance
 
@@ -374,32 +362,44 @@ def analyze_violation():
         return jsonify({"error": str(e)}), 500
 
 
+# ── Answer Feedback ────────────────────────────────────────
+
+@api_bp.route("/feedback", methods=["POST"])
+def feedback():
+    """Store a thumbs up/down (rating 1 or -1) on an answer."""
+    data = request.get_json() or {}
+    rating = data.get("rating")
+    if rating not in (1, -1):
+        return jsonify({"error": "rating must be 1 or -1"}), 400
+    store_db.log_feedback(
+        message_id=data.get("message_id"), rating=rating,
+        comment=data.get("comment"), query=data.get("query"),
+        answer=data.get("answer"),
+    )
+    return jsonify({"status": "ok"})
+
+
 # ── Dashboard Data ─────────────────────────────────────────
 
 @api_bp.route("/dashboard", methods=["GET"])
 def dashboard_data():
     """Return dashboard stats and recent alerts."""
-    store = _get_store()
-    return jsonify({
-        "stats": store["stats"],
-        "alerts": store["alerts"][-50:],
-        "recent_messages": [
-            {
-                "id": m["id"],
-                "timestamp": m["timestamp"],
-                "query": m["user_query"][:100],
-                "mode": m["mode"],
-            }
-            for m in store["messages"][-20:]
-        ],
-    })
+    return jsonify(store_db.dashboard())
 
 
 @api_bp.route("/alerts", methods=["GET"])
 def get_alerts():
-    """Return all alerts."""
-    store = _get_store()
-    return jsonify({"alerts": store["alerts"]})
+    """Return recent alerts."""
+    return jsonify({"alerts": store_db.recent_alerts(200)})
+
+
+# ── Knowledge-base stats ───────────────────────────────────
+
+@api_bp.route("/kb/stats", methods=["GET"])
+def kb_stats_endpoint():
+    """Return knowledge-base size (chunks, distinct doc types, last ingest)."""
+    from src.rag.vectorstore import kb_stats
+    return jsonify(kb_stats())
 
 
 # ── Health Check ───────────────────────────────────────────
@@ -412,5 +412,7 @@ def health():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "yolo_model_available": os.path.exists(model_path),
-        "openai_key_set": bool(os.getenv("OPENAI_API_KEY")),
+        "vision_model": settings.vision_model,
+        "llm_endpoint_configured": bool(settings.llm_base_url),
+        "db_enabled": settings.db_enabled,
     })

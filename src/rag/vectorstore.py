@@ -13,33 +13,8 @@ boots for local UI work.
 from __future__ import annotations
 
 from src.config import settings
+from src.db import get_pool
 from src.rag.embeddings import embed_query, embed_texts
-
-_pool = None
-
-
-def _get_pool():
-    """Lazily build a pgvector-aware connection pool (search_path = schema)."""
-    global _pool
-    if _pool is None:
-        from pgvector.psycopg import register_vector
-        from psycopg_pool import ConnectionPool
-
-        def _configure(conn):
-            register_vector(conn)
-
-        _pool = ConnectionPool(
-            conninfo=settings.supabase_db_url,
-            min_size=1,
-            max_size=8,
-            kwargs={
-                "autocommit": True,
-                "options": f"-c search_path={settings.supabase_db_schema},public",
-            },
-            configure=_configure,
-            open=True,
-        )
-    return _pool
 
 
 # --------------------------------------------------------------------------- #
@@ -73,7 +48,7 @@ def ingest_chunks(chunks: list) -> None:
             Json(md),
         ))
 
-    pool = _get_pool()
+    pool = get_pool()
     with pool.connection() as conn, conn.cursor() as cur:
         cur.executemany(
             """
@@ -105,7 +80,7 @@ def retrieve(query: str, n_results: int = 5, doc_type: str | None = None) -> lis
         # Over-fetch when filtering by doc_type, then filter in Python.
         fetch = n_results * 4 if doc_type else n_results
 
-        pool = _get_pool()
+        pool = get_pool()
         with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 "SELECT content, metadata, score, similarity "
@@ -138,7 +113,7 @@ def kb_stats() -> dict:
     try:
         from psycopg.rows import dict_row
 
-        pool = _get_pool()
+        pool = get_pool()
         with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT * FROM kb_stats()")
             row = cur.fetchone()

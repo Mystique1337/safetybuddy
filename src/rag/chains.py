@@ -99,7 +99,7 @@ def query_safetybuddy(
         mode: "advisor" | "incident" | "compliance" | "video_alert"
         doc_type_filter: Filter retrieval by doc type
         n_results: Number of context chunks to retrieve
-        image_base64: Base64-encoded image for GPT-4o vision
+        image_base64: Base64-encoded image for Gemma 4 vision
         image_description: Pre-analyzed image description
         detections: YOLO detection results (for video_alert mode)
     """

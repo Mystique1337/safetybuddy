@@ -137,19 +137,19 @@ class PPEVideoDetector:
         return analysis
 
     def should_trigger_alert(self) -> bool:
-        """Check if enough time has passed to send another GPT-4o alert."""
+        """Check if enough time has passed to send another Gemma 4 alert."""
         return (time.time() - self.last_alert_time) > self.alert_cooldown_seconds
 
     def mark_alert_sent(self):
         self.last_alert_time = time.time()
 
     def frame_to_base64(self, frame: np.ndarray) -> str:
-        """Encode a frame as base64 JPEG for GPT-4o."""
+        """Encode a frame as base64 JPEG for Gemma 4."""
         _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         return base64.b64encode(buf).decode()
 
     def format_detections_for_llm(self, analysis: FrameAnalysis) -> str:
-        """Format YOLO detections as text for GPT-4o prompt."""
+        """Format YOLO detections as text for Gemma 4 prompt."""
         lines = []
         for d in analysis.detections:
             status = "VIOLATION" if d.is_violation else "COMPLIANT"

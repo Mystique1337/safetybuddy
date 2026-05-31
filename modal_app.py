@@ -45,11 +45,12 @@ secrets = [modal.Secret.from_name("safetybuddy-secrets")]
 # --------------------------------------------------------------------------- #
 # Images
 # --------------------------------------------------------------------------- #
+# Official vLLM image: it ships the full CUDA toolkit (nvcc) that vLLM's runtime
+# kernel JIT needs at startup. A debian_slim + pip install of vLLM lacks nvcc and
+# crashes the engine during the profiling run. v0.22.0 already supports gemma-4.
 vllm_image = (
-    modal.Image.debian_slim(python_version="3.11")
-    # Gemma 4 needs a recent vLLM; bump this pin (or use the vllm/vllm-openai
-    # gemma4 image) if a build does not yet recognize the architecture.
-    .pip_install("vllm>=0.11.0", "huggingface_hub[hf_transfer]>=0.27")
+    modal.Image.from_registry("vllm/vllm-openai:v0.22.0", add_python="3.12")
+    .entrypoint([])  # clear the image's vllm entrypoint so Modal can run the function
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": HF_CACHE_DIR, "VLLM_USE_V1": "1"})
 )
 
@@ -107,8 +108,9 @@ def gemma():
         "--api-key", os.environ.get("LLM_API_KEY", "not-needed"),
         "--served-model-name", served_name,
         "--max-model-len", str(int(os.environ.get("MAX_MODEL_LEN", MAX_MODEL_LEN))),
-        "--limit-mm-per-prompt", '{"image": 4}',     # Gemma 4 multimodal
+        "--limit-mm-per-prompt", '{"image": 1}',     # one image per PPE request
         "--gpu-memory-utilization", "0.90",
+        "--enforce-eager",                            # skip torch.compile: faster cold start, fewer JIT paths
     ]
     subprocess.Popen(cmd)
 
@@ -133,6 +135,7 @@ def _gemma_base_url() -> str | None:
     image=web_image,
     volumes={HF_CACHE_DIR: hf_cache},
     secrets=secrets,
+    cpu=2.0,                 # faster CPU YOLO for the live webcam path + nomic embeddings
     scaledown_window=300,
     timeout=900,
 )

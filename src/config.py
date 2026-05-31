@@ -63,6 +63,18 @@ class Settings:
     chunk_chars: int = _i("RAG_CHUNK_CHARS", 1200)
     chunk_overlap: int = _i("RAG_CHUNK_OVERLAP", 200)
 
+    # --- Self-improving RAG (fetch + ingest authoritative sources when weak) ---
+    enable_web_enrich: bool = _b("RAG_ENABLE_WEB_ENRICH", True)
+    always_enrich: bool = _b("RAG_ALWAYS_ENRICH", True)   # background top-up after queries
+    coverage_threshold: float = _f("RAG_COVERAGE_THRESHOLD", 0.55)  # top cosine sim below this = weak
+    min_chunks: int = _i("RAG_MIN_CHUNKS", 3)             # fewer local hits than this = weak
+    enrich_max_urls: int = _i("RAG_ENRICH_MAX_URLS", 3)   # sources fetched per weak query
+    doc_ttl_days: int = _i("RAG_DOC_TTL_DAYS", 30)        # re-fetch a source after this many days
+    tavily_api_key: str = os.environ.get("TAVILY_API_KEY", "")   # live web search (optional)
+    http_timeout: float = _f("HTTP_TIMEOUT", 20.0)
+    user_agent: str = os.environ.get(
+        "HTTP_USER_AGENT", "SafetyBuddy/1.0 (+https://github.com/Mystique1337/safetybuddy)")
+
     # --- Generation defaults ---
     temperature: float = _f("LLM_TEMPERATURE", 0.2)
     max_tokens: int = _i("LLM_MAX_TOKENS", 1500)

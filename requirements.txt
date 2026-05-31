@@ -15,8 +15,9 @@ einops>=0.7.0
 psycopg[binary,pool]>=3.2.0
 pgvector>=0.3.0
 
-# Document processing (PDF/text ingestion)
+# Document processing + web ingestion (PDF + HTML main-text extraction)
 pymupdf>=1.24.0
+trafilatura>=1.12.0
 
 # Real-time PPE video detection
 ultralytics>=8.4.0

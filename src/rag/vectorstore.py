@@ -45,6 +45,7 @@ def ingest_chunks(chunks: list) -> None:
             c["id"], c["content"], emb,
             md.get("filename"), md.get("doc_type"),
             int(page) if isinstance(page, (int, float)) else None,
+            md.get("source_url"),
             Json(md),
         ))
 
@@ -53,8 +54,8 @@ def ingest_chunks(chunks: list) -> None:
         cur.executemany(
             """
             INSERT INTO kb_chunks
-                (chunk_uid, content, embedding, filename, doc_type, page, metadata)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (chunk_uid, content, embedding, filename, doc_type, page, source_url, metadata)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (chunk_uid) DO NOTHING
             """,
             rows,
@@ -100,7 +101,11 @@ def retrieve(query: str, n_results: int = 5, doc_type: str | None = None) -> lis
         score = r.get("score")
         if score is None:
             score = r.get("similarity") or 0.0
-        results.append({"content": r["content"], "metadata": md, "score": float(score)})
+        results.append({
+            "content": r["content"], "metadata": md,
+            "score": float(score),
+            "similarity": float(r.get("similarity") or 0.0),
+        })
         if len(results) >= n_results:
             break
     return results

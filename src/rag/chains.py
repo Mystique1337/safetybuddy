@@ -8,7 +8,7 @@ the Supabase pgvector knowledge base.
 """
 from src.config import settings
 from src.llm import get_llm_client
-from src.rag.vectorstore import retrieve
+from src.rag.retriever import retrieve_with_coverage
 
 
 PROMPTS = {
@@ -106,11 +106,13 @@ def query_safetybuddy(
     client = get_llm_client()
     template = PROMPTS.get(mode, PROMPTS["advisor"])
 
-    # Retrieve relevant PPE documents
+    # Retrieve relevant PPE documents (self-improving: fetches + ingests
+    # authoritative sources when local coverage is weak, then re-retrieves).
     search_query = user_query
     if detections:
         search_query = f"PPE violation: {detections}"
-    retrieved = retrieve(search_query, n_results=n_results, doc_type=doc_type_filter)
+    retrieved, rag_meta = retrieve_with_coverage(
+        search_query, n_results=n_results, doc_type=doc_type_filter)
     context = build_context(retrieved)
 
     # Build system message
@@ -152,10 +154,14 @@ def query_safetybuddy(
                 "source": d["metadata"].get("filename", "Unknown"),
                 "page": d["metadata"].get("page", "N/A"),
                 "type": d["metadata"].get("doc_type", "general"),
+                "url": d["metadata"].get("source_url"),
                 "relevance": round(d.get("score", 0), 3),
             }
             for d in retrieved
         ],
         "mode": mode,
+        "coverage": rag_meta["coverage"],
+        "enriched": rag_meta["enriched"],
+        "kb_added": rag_meta["kb_added"],
         "tokens_used": getattr(usage, "total_tokens", 0) if usage else 0,
     }

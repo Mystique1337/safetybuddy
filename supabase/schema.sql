@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS kb_chunks (
     filename    TEXT,
     doc_type    TEXT,                        -- regulation / safety_manual / operating_procedure / incident_report
     page        INT,
+    source_url  TEXT,                        -- origin URL for web-ingested chunks (citations + refresh)
     metadata    JSONB DEFAULT '{}'::jsonb,
     fts         TSVECTOR GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
     created_at  TIMESTAMPTZ DEFAULT now()
@@ -41,6 +42,23 @@ CREATE INDEX IF NOT EXISTS idx_kb_embedding ON kb_chunks
 CREATE INDEX IF NOT EXISTS idx_kb_fts       ON kb_chunks USING GIN (fts);
 CREATE INDEX IF NOT EXISTS idx_kb_doc_type  ON kb_chunks (doc_type);
 CREATE INDEX IF NOT EXISTS idx_kb_metadata  ON kb_chunks USING GIN (metadata);
+-- Added idempotently for stores created before web ingestion existed.
+ALTER TABLE kb_chunks ADD COLUMN IF NOT EXISTS source_url TEXT;
+CREATE INDEX IF NOT EXISTS idx_kb_source_url ON kb_chunks (source_url);
+
+-- ---------------------------------------------------------------------------
+-- kb_sources : one row per ingested URL — dedup + freshness for the
+-- self-improving RAG (skip sources that are still fresh, re-ingest on change).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS kb_sources (
+    id           BIGSERIAL PRIMARY KEY,
+    url          TEXT UNIQUE NOT NULL,
+    content_hash TEXT,
+    title        TEXT,
+    doc_type     TEXT,
+    tier         SMALLINT DEFAULT 3,        -- 1=official/regulatory, 2=reference, 3=other
+    fetched_at   TIMESTAMPTZ DEFAULT now()
+);
 
 -- ---------------------------------------------------------------------------
 -- match_chunks : pure semantic (cosine) search

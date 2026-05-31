@@ -14,8 +14,8 @@
     <!-- Sidebar -->
     <nav id="sidebar" class="sidebar">
         <div class="sidebar-brand">
-            <i class="bi bi-shield-check"></i>
-            <span>SafetyBuddy</span>
+            <span class="brand-mark"><i class="bi bi-shield-shaded"></i></span>
+            <span class="brand-text">Safety<b>Buddy</b></span>
         </div>
         <ul class="sidebar-nav">
             <li class="{% if request.path == '/' %}active{% endif %}">
@@ -32,9 +32,14 @@
             </li>
         </ul>
         <div class="sidebar-footer">
+            <div class="engine-badges">
+                <span class="engine-badge"><i class="bi bi-stars"></i> Gemma 4</span>
+                <span class="engine-badge">YOLO26</span>
+                <span class="engine-badge">Supabase</span>
+            </div>
             <div class="status-indicator" id="apiStatus">
                 <span class="status-dot"></span>
-                <small>Checking API...</small>
+                <small>Checking model...</small>
             </div>
         </div>
     </nav>

@@ -1,54 +1,80 @@
 {% extends "base.html" %}
 {% block title %}SafetyBuddy — Dashboard{% endblock %}
-{% block page_title %}<i class="bi bi-speedometer2 me-2"></i>Dashboard{% endblock %}
+{% block page_title %}<i class="bi bi-grid-1x2 me-2"></i>Dashboard{% endblock %}
 
 {% block content %}
-<!-- Stats Cards -->
+<!-- Hero -->
+<section class="hero">
+    <h1>Spot every PPE hazard, <span class="text-gradient">before it becomes an incident.</span></h1>
+    <p>SafetyBuddy pairs real-time YOLO26 detection with Gemma 4 vision and a self-improving,
+       citation-grounded knowledge base of OSHA regulation, all on your own infrastructure.</p>
+    <div class="hero-pills">
+        <span class="hero-pill" id="modelPill"><span class="status-dot online"></span> Gemma 4 vision</span>
+        <span class="hero-pill"><i class="bi bi-camera-video text-info"></i> YOLO26 real-time</span>
+        <span class="hero-pill"><i class="bi bi-database-check text-success"></i> <b id="kbChunks">—</b>&nbsp;KB passages</span>
+        <span class="hero-pill"><i class="bi bi-arrow-repeat text-warning"></i> Self-improving RAG</span>
+    </div>
+    <div class="hero-actions">
+        <a href="/monitor" class="btn btn-gradient btn-lg"><i class="bi bi-broadcast me-2"></i>Start live monitoring</a>
+        <a href="/chat" class="btn btn-outline-light-soft btn-lg"><i class="bi bi-chat-dots me-2"></i>Ask SafetyBuddy</a>
+    </div>
+</section>
+
+<!-- Stats -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-primary-subtle text-primary">
-                <i class="bi bi-chat-dots"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-value" id="statQueries">0</span>
-                <span class="stat-label">Chat Queries</span>
-            </div>
+            <div class="stat-icon g-blue"><i class="bi bi-chat-dots"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statQueries" data-count="0">0</span><span class="stat-label">Chat Queries</span></div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-success-subtle text-success">
-                <i class="bi bi-image"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-value" id="statImages">0</span>
-                <span class="stat-label">Images Analyzed</span>
-            </div>
+            <div class="stat-icon g-green"><i class="bi bi-image"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statImages" data-count="0">0</span><span class="stat-label">Images Analyzed</span></div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-warning-subtle text-warning">
-                <i class="bi bi-exclamation-triangle"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-value" id="statViolations">0</span>
-                <span class="stat-label">Violations</span>
-            </div>
+            <div class="stat-icon g-rose"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statViolations" data-count="0">0</span><span class="stat-label">Violations</span></div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
         <div class="stat-card">
-            <div class="stat-icon bg-info-subtle text-info">
-                <i class="bi bi-film"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-value" id="statFrames">0</span>
-                <span class="stat-label">Video Frames</span>
-            </div>
+            <div class="stat-icon g-violet"><i class="bi bi-film"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statFrames" data-count="0">0</span><span class="stat-label">Frames Scanned</span></div>
         </div>
     </div>
+</div>
+
+<!-- Quick actions -->
+<h6 class="text-muted text-uppercase mb-2" style="letter-spacing:.06em; font-size:.78rem;">Quick actions</h6>
+<div class="action-grid mb-4">
+    <a href="/chat" class="action-card card-hover">
+        <div class="ac-icon g-blue"><i class="bi bi-chat-square-text"></i></div>
+        <div class="ac-title">Ask a PPE question</div>
+        <div class="ac-desc">Natural-language safety advisor with OSHA citations.</div>
+        <div class="ac-go">Open chat <i class="bi bi-arrow-right"></i></div>
+    </a>
+    <a href="/chat" class="action-card card-hover">
+        <div class="ac-icon g-green"><i class="bi bi-image-alt"></i></div>
+        <div class="ac-title">Analyze an image</div>
+        <div class="ac-desc">Upload an inspection photo for a Gemma 4 PPE review.</div>
+        <div class="ac-go">Upload <i class="bi bi-arrow-right"></i></div>
+    </a>
+    <a href="/monitor" class="action-card card-hover">
+        <div class="ac-icon g-amber"><i class="bi bi-camera-video"></i></div>
+        <div class="ac-title">Live video monitor</div>
+        <div class="ac-desc">Real-time webcam detection of missing PPE.</div>
+        <div class="ac-go">Start camera <i class="bi bi-arrow-right"></i></div>
+    </a>
+    <a href="/compliance" class="action-card card-hover">
+        <div class="ac-icon g-violet"><i class="bi bi-clipboard2-check"></i></div>
+        <div class="ac-title">Compliance reference</div>
+        <div class="ac-desc">OSHA Subpart I standards at a glance.</div>
+        <div class="ac-go">Browse <i class="bi bi-arrow-right"></i></div>
+    </a>
 </div>
 
 <div class="row g-3">
@@ -56,48 +82,25 @@
     <div class="col-lg-7">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="bi bi-bell me-2"></i>Recent Alerts</h6>
+                <span><i class="bi bi-bell me-2 text-warning"></i>Recent Alerts</span>
                 <span class="badge bg-danger" id="alertCountBadge">0</span>
             </div>
-            <div class="card-body p-0" id="alertsList">
+            <div class="card-body p-0" id="alertsList" style="max-height: 46vh; overflow-y:auto;">
                 <div class="text-center text-muted py-5">
-                    <i class="bi bi-shield-check fs-1 d-block mb-2"></i>
-                    No alerts yet. Use the <a href="/monitor">Video Monitor</a> to start detecting PPE violations.
+                    <i class="bi bi-shield-check fs-1 d-block mb-2 text-success"></i>
+                    No alerts yet. Open the <a href="/monitor">Video Monitor</a> to start detecting PPE violations.
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions + Recent Queries -->
+    <!-- Recent Queries -->
     <div class="col-lg-5">
-        <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/chat" class="btn btn-outline-primary text-start">
-                        <i class="bi bi-chat-dots me-2"></i>Ask a PPE question
-                    </a>
-                    <a href="/chat" class="btn btn-outline-success text-start" id="btnUploadImage">
-                        <i class="bi bi-upload me-2"></i>Upload inspection image
-                    </a>
-                    <a href="/monitor" class="btn btn-outline-warning text-start">
-                        <i class="bi bi-camera-video me-2"></i>Start video monitoring
-                    </a>
-                    <a href="/compliance" class="btn btn-outline-info text-start">
-                        <i class="bi bi-clipboard-check me-2"></i>View regulations
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Queries</h6>
-            </div>
-            <div class="card-body p-0" id="recentQueries">
-                <div class="text-center text-muted py-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-clock-history me-2 text-info"></i>Recent Queries</div>
+            <div class="card-body p-0" id="recentQueries" style="max-height: 46vh; overflow-y:auto;">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-chat-left-dots fs-3 d-block mb-2"></i>
                     <small>No queries yet</small>
                 </div>
             </div>
@@ -108,60 +111,69 @@
 
 {% block extra_js %}
 <script>
-async function loadDashboard() {
-    try {
-        const res = await fetch('/api/dashboard');
-        const data = await res.json();
-
-        // Stats
-        document.getElementById('statQueries').textContent = data.stats.queries;
-        document.getElementById('statImages').textContent = data.stats.images_analyzed;
-        document.getElementById('statViolations').textContent = data.stats.violations;
-        document.getElementById('statFrames').textContent = data.stats.video_frames;
-
-        // Alerts
-        const alertsList = document.getElementById('alertsList');
-        const alerts = data.alerts || [];
-        document.getElementById('alertCountBadge').textContent = alerts.length;
-
-        if (alerts.length > 0) {
-            alertsList.innerHTML = '<div class="list-group list-group-flush">' +
-                alerts.slice(-15).reverse().map(a => `
-                    <div class="list-group-item d-flex align-items-center gap-3">
-                        <span class="badge ${a.severity === 'HIGH' ? 'bg-danger' : 'bg-warning'}">
-                            ${a.severity}
-                        </span>
-                        <div class="flex-grow-1">
-                            <small class="text-muted">${a.time || ''}</small>
-                            <div>${a.summary}</div>
-                        </div>
-                        <small class="text-muted">${a.source || ''}</small>
-                    </div>
-                `).join('') +
-            '</div>';
-        }
-
-        // Recent queries
-        const queriesList = document.getElementById('recentQueries');
-        const msgs = data.recent_messages || [];
-        if (msgs.length > 0) {
-            queriesList.innerHTML = '<div class="list-group list-group-flush">' +
-                msgs.reverse().map(m => `
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <small class="badge bg-secondary">${m.mode}</small>
-                            <small class="text-muted">${new Date(m.timestamp).toLocaleTimeString()}</small>
-                        </div>
-                        <div class="mt-1 text-truncate">${m.query}</div>
-                    </div>
-                `).join('') +
-            '</div>';
-        }
-    } catch (e) {
-        console.error('Dashboard load error:', e);
+function animateCount(el, target) {
+    const start = parseInt(el.dataset.count || '0', 10);
+    if (start === target) return;
+    el.dataset.count = target;
+    const dur = 700, t0 = performance.now();
+    function tick(now) {
+        const p = Math.min(1, (now - t0) / dur);
+        el.textContent = Math.round(start + (target - start) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(tick);
     }
+    requestAnimationFrame(tick);
 }
 
+async function loadStatus() {
+    try {
+        const kb = await (await fetch('/api/kb/stats')).json();
+        if (kb && typeof kb.chunks !== 'undefined') document.getElementById('kbChunks').textContent = kb.chunks;
+    } catch (e) { /* silent */ }
+    try {
+        const h = await (await fetch('/api/health')).json();
+        const pill = document.getElementById('modelPill').querySelector('.status-dot');
+        pill.className = 'status-dot ' + (h.llm_endpoint_configured ? 'online' : 'offline');
+    } catch (e) { /* silent */ }
+}
+
+async function loadDashboard() {
+    try {
+        const data = await (await fetch('/api/dashboard')).json();
+        animateCount(document.getElementById('statQueries'), data.stats.queries || 0);
+        animateCount(document.getElementById('statImages'), data.stats.images_analyzed || 0);
+        animateCount(document.getElementById('statViolations'), data.stats.violations || 0);
+        animateCount(document.getElementById('statFrames'), data.stats.video_frames || 0);
+
+        const alerts = data.alerts || [];
+        document.getElementById('alertCountBadge').textContent = alerts.length;
+        if (alerts.length > 0) {
+            document.getElementById('alertsList').innerHTML = '<div class="list-group list-group-flush">' +
+                alerts.slice(0, 30).map(a => `
+                    <div class="list-group-item d-flex align-items-center gap-3">
+                        <span class="badge ${a.severity === 'HIGH' ? 'bg-danger' : 'bg-warning text-dark'}">${a.severity || 'HIGH'}</span>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">${a.summary || ''}</div>
+                            <small class="text-muted"><i class="bi bi-camera-reels me-1"></i>${a.source || ''} · ${a.time || ''}</small>
+                        </div>
+                    </div>`).join('') + '</div>';
+        }
+
+        const msgs = data.recent_messages || [];
+        if (msgs.length > 0) {
+            document.getElementById('recentQueries').innerHTML = '<div class="list-group list-group-flush">' +
+                msgs.map(m => `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="badge bg-secondary text-uppercase">${m.mode || 'chat'}</small>
+                            <small class="text-muted">${m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : ''}</small>
+                        </div>
+                        <div class="text-truncate small">${m.query || ''}</div>
+                    </div>`).join('') + '</div>';
+        }
+    } catch (e) { console.error('Dashboard load error:', e); }
+}
+
+loadStatus();
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>

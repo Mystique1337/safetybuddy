@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}SafetyBuddy — Video Monitor{% endblock %}
+{% block title %}SafetyBuddy · Video Monitor{% endblock %}
 {% block page_title %}<i class="bi bi-camera-video me-2"></i>PPE Video Monitor{% endblock %}
 
 {% block content %}
@@ -35,16 +35,16 @@
                             <i class="bi bi-webcam display-3 text-muted d-block mb-3"></i>
                             <h5>Live PPE Detection</h5>
                             <p class="text-muted">
-                                Uses your browser camera + YOLO26 to detect PPE violations in real time.<br>
-                                <small>Frames are sent to the server for processing — requires YOLO model.</small>
+                                Uses your camera to detect PPE violations in real time.<br>
+                                <small>Your camera stays in your browser; frames are sent securely for detection.</small>
                             </p>
                             <button class="btn btn-primary btn-lg mt-2" id="btnStartLive" onclick="startLiveDetection()">
                                 <i class="bi bi-play-circle me-2"></i>Start Camera
                             </button>
                             <div id="liveModelWarning" class="alert alert-warning mt-3" style="display:none;">
                                 <i class="bi bi-exclamation-triangle me-2"></i>
-                                <strong>YOLO model not found.</strong> Train it using the Colab notebook and save as
-                                <code>data/models/ppe_yolo26n.pt</code>
+                                <strong>Live detection is unavailable.</strong> The detection model is not
+                                installed on the server. Please contact your administrator.
                             </div>
                             <div id="liveHttpsWarning" class="alert alert-danger mt-3" style="display:none;">
                                 <i class="bi bi-shield-lock me-2"></i>
@@ -98,7 +98,7 @@
                                     <i class="bi bi-stop-circle me-1"></i>Stop
                                 </button>
                                 <button class="btn btn-outline-secondary" id="btnSnapshotAnalyze" onclick="snapshotAnalyze()">
-                                    <i class="bi bi-camera me-1"></i>Snapshot + Gemma 4 Analyze
+                                    <i class="bi bi-camera me-1"></i>Snapshot + AI Analyze
                                 </button>
                             </div>
                         </div>
@@ -110,7 +110,7 @@
                         <div id="uploadArea" class="upload-zone text-center py-5">
                             <i class="bi bi-cloud-arrow-up display-3 text-muted d-block mb-3"></i>
                             <h5>Upload a video file for PPE analysis</h5>
-                            <p class="text-muted">Supports MP4, AVI, MOV — YOLO26 will scan every frame for PPE violations</p>
+                            <p class="text-muted">Supports MP4, AVI and MOV. Every frame is scanned for PPE violations.</p>
                             <label class="btn btn-primary btn-lg mt-2" for="videoUpload">
                                 <i class="bi bi-upload me-2"></i>Choose Video
                                 <input type="file" id="videoUpload" accept="video/*" hidden onchange="handleVideoUpload(event)">
@@ -162,7 +162,7 @@
                 </div>
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" id="autoAnalyze" checked>
-                    <label class="form-check-label small" for="autoAnalyze">Auto-analyze violations with Gemma 4</label>
+                    <label class="form-check-label small" for="autoAnalyze">Auto-analyze violations with AI</label>
                 </div>
             </div>
         </div>
@@ -423,15 +423,15 @@ async function snapshotAnalyze() {
 
         if (data.error) throw new Error(data.error);
 
-        addViolationLogItem('📸 Gemma 4', data.analysis.substring(0, 100) + '...');
-        showToast('Gemma 4 analysis complete — check violation log', 'success');
+        addViolationLogItem('📸 AI', data.analysis.substring(0, 100) + '...');
+        showToast('AI analysis complete. Check the violation log', 'success');
 
         const log = document.getElementById('violationLog');
         const detail = document.createElement('div');
         detail.className = 'p-3 border-bottom';
         detail.innerHTML = `
             <div class="alert alert-info small mb-0">
-                <strong><i class="bi bi-robot me-1"></i>Gemma 4 Snapshot Analysis</strong>
+                <strong><i class="bi bi-robot me-1"></i>AI Snapshot Analysis</strong>
                 <div class="mt-2">${marked.parse(data.analysis)}</div>
                 <small class="text-muted">Tokens: ${data.tokens_used}</small>
             </div>
@@ -442,7 +442,7 @@ async function snapshotAnalyze() {
         showToast('Snapshot analysis failed: ' + e.message, 'danger');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-camera me-1"></i>Snapshot + Gemma 4 Analyze';
+        btn.innerHTML = '<i class="bi bi-camera me-1"></i>Snapshot + AI Analyze';
     }
 }
 
@@ -597,7 +597,7 @@ async function analyzeViolation(violation) {
                 if (!el.innerHTML.trim()) {
                     el.innerHTML = `
                         <div class="alert alert-info small mb-0">
-                            <strong><i class="bi bi-robot me-1"></i>Gemma 4 Analysis:</strong>
+                            <strong><i class="bi bi-robot me-1"></i>AI Analysis:</strong>
                             <div class="mt-1">${marked.parse(data.analysis)}</div>
                             ${data.compliance ? `<hr><div>${marked.parse(data.compliance)}</div>` : ''}
                         </div>

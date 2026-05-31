@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}SafetyBuddy — Chat{% endblock %}
+{% block title %}SafetyBuddy · Chat{% endblock %}
 {% block page_title %}<i class="bi bi-chat-dots me-2"></i>PPE Safety Chat{% endblock %}
 
 {% block content %}
@@ -163,7 +163,7 @@ async function analyzeImage() {
     const btn = document.getElementById('btnAnalyzeImage');
     const status = document.getElementById('imageAnalysisStatus');
     btn.disabled = true;
-    status.innerHTML = '<small class="text-warning"><i class="bi bi-hourglass-split"></i> Analyzing with Gemma 4 Vision...</small>';
+    status.innerHTML = '<small class="text-warning"><i class="bi bi-hourglass-split"></i> Analyzing image...</small>';
 
     try {
         const formData = new FormData();
@@ -193,7 +193,7 @@ async function analyzeImage() {
         if (data.error) throw new Error(data.error);
 
         currentImageDesc = data.analysis;
-        status.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Analysis ready — included in next message</small>';
+        status.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Analysis ready, it will be included with your next message</small>';
 
         // If YOLO annotated image is available, show it alongside the analysis
         if (data.annotated_image) {
@@ -210,13 +210,13 @@ async function analyzeImage() {
             // Show annotated image + analysis as a single rich message
             const richHtml =
                 `<div class="mb-3">
-                    <img src="data:image/jpeg;base64,${data.annotated_image}" class="img-fluid rounded" style="max-height: 400px;" alt="YOLO26 annotated">
-                    <div class="mt-1"><small class="text-muted"><i class="bi bi-cpu me-1"></i>YOLO26 PPE Detection</small></div>
+                    <img src="data:image/jpeg;base64,${data.annotated_image}" class="img-fluid rounded" style="max-height: 400px;" alt="PPE detection">
+                    <div class="mt-1"><small class="text-muted"><i class="bi bi-cpu me-1"></i>PPE detection</small></div>
                     ${badgeHtml}
                 </div>` + marked.parse(data.analysis);
             appendMessage('assistant', richHtml, true);
         } else {
-            // No YOLO available — just show Gemma 4 text
+            // No detection overlay; show the AI text
             appendMessage('assistant', data.analysis);
         }
     } catch (e) {

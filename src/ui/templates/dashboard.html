@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}SafetyBuddy — Dashboard{% endblock %}
+{% block title %}SafetyBuddy · Dashboard{% endblock %}
 {% block page_title %}<i class="bi bi-grid-1x2 me-2"></i>Dashboard{% endblock %}
 
 {% block content %}
@@ -8,13 +8,12 @@
     <div class="hero-grid">
         <div class="hero-copy">
             <h1>Spot every PPE hazard, <span class="text-gradient">before it becomes an incident.</span></h1>
-            <p>SafetyBuddy pairs real-time YOLO26 detection with Gemma 4 vision and a self-improving,
-               citation-grounded knowledge base of OSHA regulation, all on your own infrastructure.</p>
+            <p>SafetyBuddy watches your site for missing protective equipment, explains what is wrong
+               in plain language, and backs every answer with the right OSHA standard.</p>
             <div class="hero-pills">
-                <span class="hero-pill" id="modelPill"><span class="status-dot online"></span> Gemma 4 vision</span>
-                <span class="hero-pill"><i class="bi bi-camera-video text-info"></i> YOLO26 real-time</span>
-                <span class="hero-pill"><i class="bi bi-database-check text-success"></i> <b id="kbChunks">—</b>&nbsp;KB passages</span>
-                <span class="hero-pill"><i class="bi bi-arrow-repeat text-warning"></i> Self-improving RAG</span>
+                <span class="hero-pill"><i class="bi bi-broadcast text-info"></i> Real-time hazard alerts</span>
+                <span class="hero-pill"><i class="bi bi-camera text-success"></i> Instant photo checks</span>
+                <span class="hero-pill"><i class="bi bi-clipboard-check text-warning"></i> OSHA-backed answers</span>
             </div>
             <div class="hero-actions">
                 <a href="/monitor" class="btn btn-gradient btn-lg"><i class="bi bi-broadcast me-2"></i>Start live monitoring</a>
@@ -40,19 +39,19 @@
         <span class="how-num">1</span>
         <div class="how-ic g-amber"><i class="bi bi-camera-reels"></i></div>
         <b>Detect</b>
-        <p>YOLO26 scans webcam or video in real time and flags missing hard hats, vests and masks.</p>
+        <p>Spots missing hard hats, vests and masks in real time on any webcam or recorded video.</p>
     </div>
     <div class="how-step">
         <span class="how-num">2</span>
         <div class="how-ic g-blue"><i class="bi bi-stars"></i></div>
         <b>Inspect</b>
-        <p>Gemma 4 vision writes a head-to-toe, severity-rated PPE report for any flagged frame or uploaded photo.</p>
+        <p>Get a clear, severity-rated PPE report for any flagged moment or uploaded inspection photo.</p>
     </div>
     <div class="how-step">
         <span class="how-num">3</span>
         <div class="how-ic g-violet"><i class="bi bi-clipboard2-check"></i></div>
         <b>Comply</b>
-        <p>Answers are grounded in OSHA regulation with citations, from a knowledge base that grows as you use it.</p>
+        <p>Every answer is backed by the relevant OSHA standard, and gets sharper the more you use it.</p>
     </div>
 </div>
 
@@ -97,7 +96,7 @@
     <a href="/chat" class="action-card card-hover">
         <div class="ac-icon g-green"><i class="bi bi-image-alt"></i></div>
         <div class="ac-title">Analyze an image</div>
-        <div class="ac-desc">Upload an inspection photo for a Gemma 4 PPE review.</div>
+        <div class="ac-desc">Upload an inspection photo for an instant PPE review.</div>
         <div class="ac-go">Upload <i class="bi bi-arrow-right"></i></div>
     </a>
     <a href="/monitor" class="action-card card-hover">
@@ -161,18 +160,6 @@ function animateCount(el, target) {
     requestAnimationFrame(tick);
 }
 
-async function loadStatus() {
-    try {
-        const kb = await (await fetch('/api/kb/stats')).json();
-        if (kb && typeof kb.chunks !== 'undefined') document.getElementById('kbChunks').textContent = kb.chunks;
-    } catch (e) { /* silent */ }
-    try {
-        const h = await (await fetch('/api/health')).json();
-        const pill = document.getElementById('modelPill').querySelector('.status-dot');
-        pill.className = 'status-dot ' + (h.llm_endpoint_configured ? 'online' : 'offline');
-    } catch (e) { /* silent */ }
-}
-
 async function loadDashboard() {
     try {
         const data = await (await fetch('/api/dashboard')).json();
@@ -210,7 +197,6 @@ async function loadDashboard() {
     } catch (e) { console.error('Dashboard load error:', e); }
 }
 
-loadStatus();
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>

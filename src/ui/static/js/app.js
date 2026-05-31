@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   SafetyBuddy — Core JavaScript
+   SafetyBuddy Core JavaScript
    ═══════════════════════════════════════════ */
 
 // ── Sidebar Toggle (mobile) ──────────────
@@ -40,7 +40,7 @@ async function checkHealth() {
 
         if (data.status === 'healthy') {
             dot.className = 'status-dot online';
-            label.textContent = data.llm_endpoint_configured ? 'Gemma 4 Connected' : 'Model Offline';
+            label.textContent = data.llm_endpoint_configured ? 'System online' : 'System offline';
         } else {
             dot.className = 'status-dot offline';
             label.textContent = 'API Error';

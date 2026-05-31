@@ -19,5 +19,6 @@ RUN mkdir -p data/models data/processed data/raw
 
 EXPOSE 5000
 
-# Use gunicorn for production; 2 workers + 120s timeout for GPT-4o / YOLO
+# Local/container run path. Production hosting is on Modal (see modal_app.py).
+# 2 workers + 120s timeout to accommodate Gemma 4 calls / YOLO inference.
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "run:app"]

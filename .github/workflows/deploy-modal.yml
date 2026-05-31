@@ -1,0 +1,41 @@
+name: Deploy to Modal
+
+# Continuous deployment to Modal. On every push to master (or a manual run),
+# CI compiles the sources and deploys modal_app.py.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   MODAL_TOKEN_ID      - Modal token id for the target workspace (chidi-ashinze)
+#   MODAL_TOKEN_SECRET  - matching Modal token secret
+#
+# The app's runtime config (Supabase URL, Gemma API key, ...) lives in the Modal
+# secret `safetybuddy-secrets`, created once with scripts/setup_modal_secret.sh
+# and referenced by modal_app.py — it is NOT needed in CI.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Modal
+        run: pip install modal
+
+      - name: Compile sources (fail fast on syntax errors)
+        run: python -m compileall -q src modal_app.py run.py ingest.py
+
+      - name: Deploy to Modal
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: modal deploy modal_app.py

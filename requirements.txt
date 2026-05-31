@@ -11,8 +11,8 @@ openai>=1.55.0
 sentence-transformers>=3.0.0
 einops>=0.7.0
 
-# Vector store + analytics: Postgres / Supabase + pgvector
-psycopg[binary]>=3.2.0
+# Vector store + analytics: Postgres / Supabase + pgvector (with connection pool)
+psycopg[binary,pool]>=3.2.0
 pgvector>=0.3.0
 
 # Document processing (PDF/text ingestion)

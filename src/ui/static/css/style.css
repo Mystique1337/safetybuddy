@@ -250,6 +250,22 @@ a:hover { color: var(--sb-yellow-bright); }
 .source-chip .src-num { width: 22px; height: 22px; border-radius: 6px; background: var(--sb-gradient); color: var(--sb-on-yellow); display: grid; place-items: center; font-size: .72rem; font-weight: 800; flex-shrink: 0; }
 .source-chip a { font-weight: 700; }
 .src-tier { font-size: .68rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--sb-border); color: var(--sb-text-muted); }
+
+/* PPE report card */
+.report-card { width: 100%; }
+.rc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.rc-verdict { font-weight: 900; text-transform: uppercase; letter-spacing: .04em; font-size: .82rem; padding: 5px 12px; border-radius: 7px; }
+.rc-verdict.rc-bad { background: var(--sb-danger); color: #fff; }
+.rc-verdict.rc-ok { background: var(--sb-success); color: #04130a; }
+.rc-verdict.rc-na { background: var(--sb-surface); color: var(--sb-text-muted); border: 1px solid var(--sb-border); }
+.rc-people { font-size: .8rem; color: var(--sb-text-muted); }
+.rc-checklist { display: flex; flex-direction: column; gap: 6px; }
+.rc-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; background: var(--sb-surface); border: 1px solid var(--sb-border-soft); font-size: .88rem; }
+.rc-item i { font-size: 1.1rem; }
+.rc-item .rc-label { font-weight: 600; }
+.rc-item .rc-status { margin-left: auto; font-size: .76rem; color: var(--sb-text-muted); text-transform: uppercase; letter-spacing: .03em; }
+.rc-details { margin-top: 12px; }
+.rc-details summary { cursor: pointer; font-size: .8rem; font-weight: 700; color: var(--sb-yellow); text-transform: uppercase; letter-spacing: .03em; }
 .typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
 .typing-indicator span { width: 8px; height: 8px; border-radius: 50%; background: var(--sb-yellow); animation: typing 1.4s infinite; }
 .typing-indicator span:nth-child(2) { animation-delay: .2s; }

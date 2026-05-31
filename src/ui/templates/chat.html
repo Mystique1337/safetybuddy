@@ -158,6 +158,35 @@ function clearImage() {
     currentImageDesc = null;
 }
 
+function renderReportCard(dets, analysis, annotated) {
+    dets = dets || [];
+    const cats = [['Hardhat', 'Hard hat'], ['Safety Vest', 'Hi-vis vest'], ['Mask', 'Mask']];
+    const people = dets.filter(d => d.class_name === 'Person').length;
+    const anyViol = dets.some(d => d.is_violation);
+    const anyPPE = dets.some(d => ['Hardhat', 'Safety Vest', 'Mask'].includes(d.class_name));
+    const verdict = anyViol ? ['At risk', 'rc-bad'] : (anyPPE ? ['Compliant', 'rc-ok'] : ['No clear PPE', 'rc-na']);
+    let items = '';
+    for (const [key, label] of cats) {
+        const miss = dets.some(d => d.class_name === 'NO-' + key);
+        const pass = dets.some(d => d.class_name === key);
+        let ic, txt;
+        if (miss) { ic = 'bi-x-circle-fill text-danger'; txt = 'Missing'; }
+        else if (pass) { ic = 'bi-check-circle-fill text-success'; txt = 'OK'; }
+        else { ic = 'bi-dash-circle text-secondary'; txt = 'Not detected'; }
+        items += `<div class="rc-item"><i class="bi ${ic}"></i><span class="rc-label">${label}</span><span class="rc-status">${txt}</span></div>`;
+    }
+    const img = annotated ? `<img src="data:image/jpeg;base64,${annotated}" class="img-fluid rounded mt-3" style="max-height:340px;" alt="PPE detection">` : '';
+    const narrative = analysis ? `<details class="rc-details"><summary>Full AI inspection</summary><div class="mt-2">${marked.parse(analysis)}</div></details>` : '';
+    return `<div class="report-card">
+        <div class="rc-head">
+            <span class="rc-verdict ${verdict[1]}">${verdict[0]}</span>
+            <span class="rc-people"><i class="bi bi-people-fill me-1"></i>${people} ${people === 1 ? 'worker' : 'workers'}</span>
+        </div>
+        <div class="rc-checklist">${items}</div>
+        ${img}${narrative}
+    </div>`;
+}
+
 async function analyzeImage() {
     if (!currentImageB64) return;
     const btn = document.getElementById('btnAnalyzeImage');
@@ -195,29 +224,12 @@ async function analyzeImage() {
         currentImageDesc = data.analysis;
         status.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Analysis ready, it will be included with your next message</small>';
 
-        // If YOLO annotated image is available, show it alongside the analysis
-        if (data.annotated_image) {
-            // Build detection summary badges
-            let badgeHtml = '';
-            if (data.yolo_detections && data.yolo_detections.length) {
-                badgeHtml = '<div class="mt-2 mb-2">' +
-                    data.yolo_detections.map(d => {
-                        const cls = d.is_violation ? 'bg-danger' : 'bg-success';
-                        return `<span class="badge ${cls} me-1">${d.class_name} ${(d.confidence * 100).toFixed(0)}%</span>`;
-                    }).join('') + '</div>';
-            }
-
-            // Show annotated image + analysis as a single rich message
-            const richHtml =
-                `<div class="mb-3">
-                    <img src="data:image/jpeg;base64,${data.annotated_image}" class="img-fluid rounded" style="max-height: 400px;" alt="PPE detection">
-                    <div class="mt-1"><small class="text-muted"><i class="bi bi-cpu me-1"></i>PPE detection</small></div>
-                    ${badgeHtml}
-                </div>` + marked.parse(data.analysis);
-            appendMessage('assistant', richHtml, true);
+        // Render a clean PPE report card (checklist built from the detector);
+        // the full AI inspection is tucked into a details panel below.
+        if ((data.yolo_detections && data.yolo_detections.length) || data.annotated_image) {
+            appendMessage('assistant', renderReportCard(data.yolo_detections, data.analysis, data.annotated_image), true);
         } else {
-            // No detection overlay; show the AI text
-            appendMessage('assistant', data.analysis);
+            appendMessage('assistant', marked.parse(data.analysis || ''), true);
         }
     } catch (e) {
         const msg = e.name === 'AbortError' ? 'Request timed out (2 min). Try a smaller image.' : e.message;

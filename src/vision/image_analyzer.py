@@ -1,14 +1,15 @@
 """
-GPT-4o vision analysis for PPE compliance on still images.
+Gemma 4 vision analysis for PPE compliance on still images.
 Used for uploaded inspection photos and violation frame snapshots.
+
+Gemma 4 (google/gemma-4-*-it) is natively multimodal and is served by vLLM on
+Modal through an OpenAI-compatible API, so the request shape is the familiar
+chat-completions call with an ``image_url`` part. See src/llm.py and modal_app.py.
 """
 import base64
-from openai import OpenAI
-from dotenv import load_dotenv
 
-load_dotenv()
-
-_client = None
+from src.config import settings
+from src.llm import get_llm_client
 
 VISION_PROMPT = """You are SafetyBuddy's PPE visual inspector for industrial environments.
 
@@ -32,13 +33,6 @@ For each finding:
 End with OVERALL RISK LEVEL: CRITICAL / HIGH / MODERATE / LOW"""
 
 
-def _get_client():
-    global _client
-    if _client is None:
-        _client = OpenAI()
-    return _client
-
-
 def encode_image_file(path: str) -> str:
     """Read and base64-encode an image file."""
     with open(path, "rb") as f:
@@ -48,14 +42,14 @@ def encode_image_file(path: str) -> str:
 def analyze_image(image_source: str, additional_context: str = "",
                   is_base64: bool = False) -> dict:
     """
-    Analyze an image for PPE compliance using GPT-4o vision.
+    Analyze an image for PPE compliance using Gemma 4 vision.
 
     Args:
         image_source: File path or base64-encoded string
         additional_context: Extra info about the scene
         is_base64: True if image_source is already base64
     """
-    client = _get_client()
+    client = get_llm_client()
     b64 = image_source if is_base64 else encode_image_file(image_source)
 
     user_text = "Analyze this image for PPE compliance. Identify all workers and check their PPE status."
@@ -63,23 +57,24 @@ def analyze_image(image_source: str, additional_context: str = "",
         user_text += f"\nContext: {additional_context}"
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=settings.vision_model,
         messages=[
             {"role": "system", "content": VISION_PROMPT},
             {
                 "role": "user",
                 "content": [
                     {"type": "image_url", "image_url": {
-                        "url": f"data:image/jpeg;base64,{b64}", "detail": "high"}},
+                        "url": f"data:image/jpeg;base64,{b64}"}},
                     {"type": "text", "text": user_text},
                 ],
             },
         ],
         temperature=0.1,
-        max_tokens=1500,
+        max_tokens=max(settings.max_tokens, 1500),
     )
 
+    usage = getattr(response, "usage", None)
     return {
         "analysis": response.choices[0].message.content,
-        "tokens_used": response.usage.total_tokens,
+        "tokens_used": getattr(usage, "total_tokens", 0) if usage else 0,
     }

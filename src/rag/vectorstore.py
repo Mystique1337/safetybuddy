@@ -83,9 +83,12 @@ def retrieve(query: str, n_results: int = 5, doc_type: str | None = None) -> lis
 
         pool = get_pool()
         with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+            # Cast the embedding param to vector explicitly: psycopg sends a
+            # Python list as double precision[], and Postgres will not implicitly
+            # cast that to vector during function overload resolution.
             cur.execute(
                 "SELECT content, metadata, score, similarity "
-                "FROM hybrid_search(%s, %s, %s)",
+                "FROM hybrid_search(%s, %s::vector, %s::int)",
                 (query, emb, fetch),
             )
             rows = cur.fetchall()

@@ -30,78 +30,57 @@
 
                     <!-- ═══ LIVE WEBCAM TAB ═══ -->
                     <div class="tab-pane fade show active" id="livePane" role="tabpanel">
-                        <!-- Before starting -->
-                        <div id="liveStartArea" class="text-center py-4">
-                            <i class="bi bi-webcam display-3 text-muted d-block mb-3"></i>
-                            <h5>Live PPE Detection</h5>
-                            <p class="text-muted">
-                                Uses your camera to detect PPE violations in real time.<br>
-                                <small>Your camera stays in your browser; frames are sent securely for detection.</small>
-                            </p>
-                            <button class="btn btn-primary btn-lg mt-2" id="btnStartLive" onclick="startLiveDetection()">
-                                <i class="bi bi-play-circle me-2"></i>Start Camera
-                            </button>
-                            <div id="liveModelWarning" class="alert alert-warning mt-3" style="display:none;">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                <strong>Live detection is unavailable.</strong> The detection model is not
-                                installed on the server. Please contact your administrator.
+                        <!-- Monitoring console: the stage is always on screen -->
+                        <div class="video-stage mb-3" id="videoStage">
+                            <video id="webcamVideo" autoplay playsinline muted style="display:none;"></video>
+                            <canvas id="liveCanvas"></canvas>
+                            <canvas id="captureCanvas" style="display:none;"></canvas>
+                            <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
+                            <span class="hud-corner bl"></span><span class="hud-corner br"></span>
+
+                            <div class="stage-topbar" id="stageTopbar" style="display:none;">
+                                <span class="live-pill" id="liveStatusBadge"><span class="dot"></span> LIVE</span>
+                                <span class="fps-pill" id="liveFps">-- FPS</span>
                             </div>
-                            <div id="liveHttpsWarning" class="alert alert-danger mt-3" style="display:none;">
-                                <i class="bi bi-shield-lock me-2"></i>
-                                <strong>Camera requires HTTPS.</strong> Browsers block camera access over plain HTTP.
-                                Access this page via <code>https://</code> or from <code>localhost</code>.
+
+                            <div class="stage-banner" id="stageBanner" style="display:none;">
+                                <span class="sb-text"><i class="bi bi-exclamation-octagon-fill me-2"></i><b id="stageBannerText">PPE VIOLATION</b></span>
+                                <button class="btn btn-sm btn-light fw-bold" onclick="explainViolation()"><i class="bi bi-stars me-1"></i>Explain</button>
+                            </div>
+
+                            <div class="stage-standby" id="stageStandby">
+                                <i class="bi bi-webcam"></i>
+                                <div class="standby-label">Standby</div>
+                                <p>Live PPE detection. Your camera stays in your browser; frames are sent securely for detection.</p>
+                                <button class="btn btn-primary btn-lg" id="btnStartLive" onclick="startLiveDetection()">
+                                    <i class="bi bi-play-circle me-2"></i>Start Camera
+                                </button>
+                                <div id="liveModelWarning" class="alert alert-warning mt-3 mb-0" style="display:none;">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Live detection is unavailable.</strong> The detection model is not installed on the server. Please contact your administrator.
+                                </div>
+                                <div id="liveHttpsWarning" class="alert alert-danger mt-3 mb-0" style="display:none;">
+                                    <i class="bi bi-shield-lock me-2"></i>
+                                    <strong>Camera requires HTTPS.</strong> Open this page over https or from localhost.
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Live feed (hidden until started) -->
-                        <div id="liveFeedArea" style="display: none;">
-                            <div class="video-stage mb-3">
-                                <video id="webcamVideo" autoplay playsinline muted style="display:none;"></video>
-                                <canvas id="liveCanvas"></canvas>
-                                <canvas id="captureCanvas" style="display:none;"></canvas>
-                                <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
-                                <span class="hud-corner bl"></span><span class="hud-corner br"></span>
-                                <div class="stage-topbar">
-                                    <span class="live-pill" id="liveStatusBadge"><span class="dot"></span> LIVE</span>
-                                    <span class="fps-pill" id="liveFps">-- FPS</span>
-                                </div>
-                            </div>
-
-                            <!-- Live stats bar -->
+                        <!-- Live stats + controls (shown when running) -->
+                        <div id="liveControls" style="display:none;">
                             <div class="row g-2 mb-3">
-                                <div class="col-3">
-                                    <div class="stat-card stat-card-sm">
-                                        <div class="stat-value" id="liveFrameCount">0</div>
-                                        <div class="stat-label">Frames</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="stat-card stat-card-sm">
-                                        <div class="stat-value text-success" id="liveCompliant">0</div>
-                                        <div class="stat-label">Compliant</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="stat-card stat-card-sm">
-                                        <div class="stat-value text-danger" id="liveViolations">0</div>
-                                        <div class="stat-label">Violations</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="stat-card stat-card-sm">
-                                        <div class="stat-value" id="liveDetections">0</div>
-                                        <div class="stat-label">Detections</div>
-                                    </div>
-                                </div>
+                                <div class="col-3"><div class="stat-card stat-card-sm"><div class="stat-value" id="liveFrameCount">0</div><div class="stat-label">Frames</div></div></div>
+                                <div class="col-3"><div class="stat-card stat-card-sm"><div class="stat-value text-success" id="liveCompliant">0</div><div class="stat-label">Compliant</div></div></div>
+                                <div class="col-3"><div class="stat-card stat-card-sm"><div class="stat-value text-danger" id="liveViolations">0</div><div class="stat-label">Violations</div></div></div>
+                                <div class="col-3"><div class="stat-card stat-card-sm"><div class="stat-value" id="liveDetections">0</div><div class="stat-label">Detections</div></div></div>
                             </div>
-
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-danger" onclick="stopLiveDetection()">
-                                    <i class="bi bi-stop-circle me-1"></i>Stop
-                                </button>
-                                <button class="btn btn-outline-secondary" id="btnSnapshotAnalyze" onclick="snapshotAnalyze()">
-                                    <i class="bi bi-camera me-1"></i>Snapshot + AI Analyze
-                                </button>
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <button class="btn btn-danger" onclick="stopLiveDetection()"><i class="bi bi-stop-circle me-1"></i>Stop</button>
+                                <button class="btn btn-outline-light-soft" id="btnSnapshotAnalyze" onclick="snapshotAnalyze()"><i class="bi bi-camera me-1"></i>Snapshot + AI Analyze</button>
+                                <div class="form-check form-switch ms-auto mb-0">
+                                    <input class="form-check-input" type="checkbox" id="soundToggle" checked>
+                                    <label class="form-check-label small" for="soundToggle">Alert sound</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -235,8 +214,9 @@ async function startLiveDetection() {
         video.srcObject = liveStream;
         await video.play();
 
-        document.getElementById('liveStartArea').style.display = 'none';
-        document.getElementById('liveFeedArea').style.display = 'block';
+        document.getElementById('stageStandby').style.display = 'none';
+        document.getElementById('stageTopbar').style.display = 'flex';
+        document.getElementById('liveControls').style.display = 'block';
         document.getElementById('processingStatus').textContent = 'LIVE';
         document.getElementById('processingStatus').className = 'badge bg-success';
 
@@ -265,8 +245,12 @@ function stopLiveDetection() {
         liveStream = null;
     }
 
-    document.getElementById('liveStartArea').style.display = 'block';
-    document.getElementById('liveFeedArea').style.display = 'none';
+    document.getElementById('stageStandby').style.display = 'flex';
+    document.getElementById('stageTopbar').style.display = 'none';
+    document.getElementById('liveControls').style.display = 'none';
+    document.getElementById('stageBanner').style.display = 'none';
+    document.querySelector('.video-stage').classList.remove('alert');
+    violationActive = false;
     document.getElementById('processingStatus').textContent = 'Stopped';
     document.getElementById('processingStatus').className = 'badge bg-secondary';
 
@@ -279,6 +263,9 @@ function stopLiveDetection() {
 let latestDets = [];
 let sentScale = 1;
 let rafId = null;
+let violationActive = false;
+let lastViolation = [];
+let audioCtx = null;
 
 function startLiveLoops() {
     renderLoop();   // smooth: draws the webcam every animation frame
@@ -363,21 +350,66 @@ async function detectLoop() {
         document.getElementById('liveFps').textContent = (1000 / Math.max(interval, elapsed)).toFixed(1) + ' FPS';
 
         const badge = document.getElementById('liveStatusBadge');
+        const banner = document.getElementById('stageBanner');
         document.querySelector('.video-stage').classList.toggle('alert', !!data.has_violations);
         if (data.has_violations) {
+            const vnames = latestDets.filter(d => d.is_violation).map(d => d.class_name);
+            lastViolation = vnames;
             badge.className = 'live-pill violation';
             badge.innerHTML = '<span class="dot"></span> VIOLATION';
-            const vnames = latestDets.filter(d => d.is_violation).map(d => d.class_name);
-            addViolationLogItem(new Date().toLocaleTimeString(), vnames.join(', '));
+            document.getElementById('stageBannerText').textContent = vnames.map(n => n.replace('NO-', 'No ')).join(', ');
+            banner.style.display = 'flex';
+            if (!violationActive) {   // rising edge: log + beep once per episode
+                addViolationLogItem(new Date().toLocaleTimeString(), vnames.join(', '));
+                maybeBeep();
+            }
+            violationActive = true;
         } else {
             badge.className = 'live-pill';
             badge.innerHTML = '<span class="dot"></span> LIVE';
+            banner.style.display = 'none';
+            violationActive = false;
         }
     } catch (e) {
         console.error('Detection error:', e);
     }
 
     if (liveRunning) setTimeout(detectLoop, Math.max(0, interval - elapsed));
+}
+
+function maybeBeep() {
+    const t = document.getElementById('soundToggle');
+    if (!t || !t.checked) return;
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'square'; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.07, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + 0.25);
+    } catch (e) { /* audio not available */ }
+}
+
+async function explainViolation() {
+    if (!lastViolation || !lastViolation.length) { showToast('No active violation to explain.', 'info'); return; }
+    const b64 = document.getElementById('liveCanvas').toDataURL('image/jpeg', 0.85).split(',')[1];
+    showToast('Asking the AI to explain this violation...', 'info');
+    try {
+        const res = await fetch('/api/analyze-violation', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ detections: lastViolation.join(', '), image_base64: b64 }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        const detail = document.createElement('div');
+        detail.className = 'p-3 border-bottom';
+        detail.innerHTML = '<div class="alert alert-info small mb-0"><strong><i class="bi bi-stars me-1"></i>AI Analysis</strong><div class="mt-2">' + marked.parse(data.analysis) + '</div></div>';
+        document.getElementById('violationLog').prepend(detail);
+        showToast('AI analysis added to the violation log.', 'success');
+    } catch (e) {
+        showToast('Could not analyze: ' + e.message, 'danger');
+    }
 }
 
 function addViolationLogItem(time, summary) {

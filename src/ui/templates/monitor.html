@@ -55,22 +55,13 @@
 
                         <!-- Live feed (hidden until started) -->
                         <div id="liveFeedArea" style="display: none;">
-                            <div class="position-relative mb-3">
-                                <!-- Hidden video element for camera capture -->
+                            <div class="video-stage mb-3">
                                 <video id="webcamVideo" autoplay playsinline muted style="display:none;"></video>
-                                <!-- Canvas to grab frames -->
+                                <canvas id="liveCanvas"></canvas>
                                 <canvas id="captureCanvas" style="display:none;"></canvas>
-                                <!-- Annotated output from YOLO -->
-                                <img id="annotatedFrame" class="w-100 rounded"
-                                     style="min-height: 300px; background: #111; object-fit: contain;"
-                                     alt="Live feed">
-                                <!-- Overlay status bar -->
-                                <div class="position-absolute top-0 start-0 end-0 d-flex justify-content-between px-3 py-2"
-                                     style="background: rgba(0,0,0,0.6);">
-                                    <span id="liveStatusBadge" class="badge bg-success">
-                                        <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i>LIVE
-                                    </span>
-                                    <span class="text-white small" id="liveFps">-- FPS</span>
+                                <div class="stage-topbar">
+                                    <span class="live-pill" id="liveStatusBadge"><span class="dot"></span> LIVE</span>
+                                    <span class="fps-pill" id="liveFps">-- FPS</span>
                                 </div>
                             </div>
 
@@ -250,7 +241,7 @@ async function startLiveDetection() {
         liveRunning = true;
         liveStats = { frames: 0, compliant: 0, violations: 0, detections: 0 };
 
-        sendNextFrame();
+        startLiveLoops();
 
     } catch (e) {
         btn.disabled = false;
@@ -264,6 +255,8 @@ async function startLiveDetection() {
 
 function stopLiveDetection() {
     liveRunning = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    latestDets = [];
 
     if (liveStream) {
         liveStream.getTracks().forEach(t => t.stop());
@@ -280,88 +273,108 @@ function stopLiveDetection() {
     btn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Camera';
 }
 
-async function sendNextFrame() {
-    if (!liveRunning) return;
+// ── Real-time rendering: smooth local video + async detection overlay ──
+let latestDets = [];
+let sentScale = 1;
+let rafId = null;
 
+function startLiveLoops() {
+    renderLoop();   // smooth: draws the webcam every animation frame
+    detectLoop();   // throttled: sends frames to the server for detection
+}
+
+function renderLoop() {
+    if (!liveRunning) return;
+    const video = document.getElementById('webcamVideo');
+    const canvas = document.getElementById('liveCanvas');
+    if (video.readyState >= 2 && video.videoWidth) {
+        if (canvas.width !== video.videoWidth) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        drawBoxes(ctx);
+    }
+    rafId = requestAnimationFrame(renderLoop);
+}
+
+function drawBoxes(ctx) {
+    const inv = sentScale ? (1 / sentScale) : 1;   // sent-frame -> intrinsic video coords
+    ctx.lineWidth = Math.max(2, ctx.canvas.width / 320);
+    ctx.font = ((Math.max(13, ctx.canvas.width / 42)) | 0) + 'px Inter, sans-serif';
+    ctx.textBaseline = 'top';
+    for (const d of latestDets) {
+        if (!d.bbox) continue;
+        const x1 = d.bbox[0] * inv, y1 = d.bbox[1] * inv, x2 = d.bbox[2] * inv, y2 = d.bbox[3] * inv;
+        const color = (d.is_violation || /^NO-/.test(d.class_name)) ? '#ef4444' : '#22c55e';
+        ctx.strokeStyle = color;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        const label = d.class_name + ' ' + Math.round(d.confidence * 100) + '%';
+        const th = (parseInt(ctx.font) || 14) + 8;
+        const tw = ctx.measureText(label).width + 10;
+        const ly = Math.max(0, y1 - th);
+        ctx.fillStyle = color;
+        ctx.fillRect(x1, ly, tw, th);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, x1 + 5, ly + 4);
+    }
+}
+
+async function detectLoop() {
+    if (!liveRunning) return;
     const fpsTarget = parseInt(document.getElementById('fpsSlider').value) || 3;
     const interval = 1000 / fpsTarget;
-    let elapsed = 0;   // function-scoped so the throttle below can read it
+    let elapsed = 0;
+    const t0 = performance.now();
 
     try {
         const video = document.getElementById('webcamVideo');
         const canvas = document.getElementById('captureCanvas');
+        if (video.readyState < 2 || !video.videoWidth) { setTimeout(detectLoop, 120); return; }
 
-        if (video.readyState < 2) {
-            setTimeout(sendNextFrame, 100);
-            return;
-        }
-
-        // Scale down large webcam feeds to max 640px width for much faster network/inference
-        const scale = Math.min(1.0, 640 / video.videoWidth);
-        canvas.width = video.videoWidth * scale;
-        canvas.height = video.videoHeight * scale;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-        const frameB64 = dataUrl.split(',')[1];
-
-        const startTime = performance.now();
+        // Downscale to max 640px wide for faster network + inference.
+        sentScale = Math.min(1.0, 640 / video.videoWidth);
+        canvas.width = video.videoWidth * sentScale;
+        canvas.height = video.videoHeight * sentScale;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frameB64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
 
         const res = await fetch('/api/detect-frame', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                frame: frameB64,
-                confidence: parseFloat(document.getElementById('confSlider').value),
-            }),
+            body: JSON.stringify({ frame: frameB64, confidence: parseFloat(document.getElementById('confSlider').value) }),
         });
-
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error || `Server error ${res.status}`);
-        }
-
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || ('Server error ' + res.status)); }
         const data = await res.json();
-        elapsed = performance.now() - startTime;
+        elapsed = performance.now() - t0;
 
-        document.getElementById('annotatedFrame').src = 'data:image/jpeg;base64,' + data.annotated_frame;
-
+        latestDets = data.detections || [];
         liveStats.frames++;
         liveStats.compliant += data.compliant_count || 0;
         liveStats.violations += data.violation_count || 0;
-        liveStats.detections += (data.detections || []).length;
-
+        liveStats.detections = latestDets.length;
         document.getElementById('liveFrameCount').textContent = liveStats.frames;
         document.getElementById('liveCompliant').textContent = liveStats.compliant;
         document.getElementById('liveViolations').textContent = liveStats.violations;
         document.getElementById('liveDetections').textContent = liveStats.detections;
-        
-        const actualFps = 1000 / Math.max(interval, elapsed);
-        document.getElementById('liveFps').textContent = actualFps.toFixed(1) + ' FPS';
+        document.getElementById('liveFps').textContent = (1000 / Math.max(interval, elapsed)).toFixed(1) + ' FPS';
 
-        const statusBadge = document.getElementById('liveStatusBadge');
+        const badge = document.getElementById('liveStatusBadge');
         if (data.has_violations) {
-            statusBadge.className = 'badge bg-danger';
-            statusBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>VIOLATION';
-        } else {
-            statusBadge.className = 'badge bg-success';
-            statusBadge.innerHTML = '<i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i>LIVE';
-        }
-
-        if (data.has_violations) {
-            const vnames = data.detections.filter(d => d.is_violation).map(d => d.class_name);
+            badge.className = 'live-pill violation';
+            badge.innerHTML = '<span class="dot"></span> VIOLATION';
+            const vnames = latestDets.filter(d => d.is_violation).map(d => d.class_name);
             addViolationLogItem(new Date().toLocaleTimeString(), vnames.join(', '));
+        } else {
+            badge.className = 'live-pill';
+            badge.innerHTML = '<span class="dot"></span> LIVE';
         }
-
     } catch (e) {
-        console.error('Frame detection error:', e);
+        console.error('Detection error:', e);
     }
 
-    if (liveRunning) {
-        const nextDelay = Math.max(0, interval - elapsed);
-        setTimeout(sendNextFrame, nextDelay);
-    }
+    if (liveRunning) setTimeout(detectLoop, Math.max(0, interval - elapsed));
 }
 
 function addViolationLogItem(time, summary) {

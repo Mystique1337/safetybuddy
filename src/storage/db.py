@@ -170,12 +170,12 @@ def dashboard() -> dict:
     if not settings.db_enabled:
         with _mem_lock:
             events = _mem["events"]
+            today = _now_iso()[:10]
             stats = {
-                "queries": sum(1 for e in events if e["kind"] == "chat"),
-                "images_analyzed": sum(1 for e in events if e["kind"] == "image"),
-                "video_frames": sum(int((e.get("metadata") or {}).get("frames", 0))
-                                    for e in events if e["kind"] == "video"),
+                "violations_today": sum(1 for a in _mem["alerts"] if (a.get("created_at") or "")[:10] == today),
                 "violations": len(_mem["alerts"]),
+                "inspections": sum(1 for e in events if e["kind"] in ("image", "video")),
+                "questions": sum(1 for e in events if e["kind"] == "chat"),
             }
             recent_messages = [{
                 "id": e["id"], "timestamp": e["created_at"],
@@ -189,11 +189,11 @@ def dashboard() -> dict:
         with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """SELECT
-                     (SELECT count(*) FROM events WHERE kind='chat')   AS queries,
-                     (SELECT count(*) FROM events WHERE kind='image')  AS images_analyzed,
-                     (SELECT COALESCE(SUM((metadata->>'frames')::int),0)
-                        FROM events WHERE kind='video')                AS video_frames,
-                     (SELECT count(*) FROM alerts)                     AS violations"""
+                     (SELECT count(*) FROM alerts
+                        WHERE created_at >= date_trunc('day', now()))             AS violations_today,
+                     (SELECT count(*) FROM alerts)                                AS violations,
+                     (SELECT count(*) FROM events WHERE kind IN ('image','video')) AS inspections,
+                     (SELECT count(*) FROM events WHERE kind='chat')              AS questions"""
             )
             stats = dict(cur.fetchone())
             cur.execute(

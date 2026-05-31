@@ -60,26 +60,26 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
         <div class="stat-card">
+            <div class="stat-icon g-rose"><i class="bi bi-exclamation-octagon"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statViolToday" data-count="0">0</span><span class="stat-label">Violations Today</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon g-amber"><i class="bi bi-flag-fill"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statViolations" data-count="0">0</span><span class="stat-label">Violations All Time</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon g-green"><i class="bi bi-clipboard2-check"></i></div>
+            <div class="stat-info"><span class="stat-value" id="statInspections" data-count="0">0</span><span class="stat-label">Inspections Run</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
             <div class="stat-icon g-blue"><i class="bi bi-chat-dots"></i></div>
-            <div class="stat-info"><span class="stat-value" id="statQueries" data-count="0">0</span><span class="stat-label">Chat Queries</span></div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-icon g-green"><i class="bi bi-image"></i></div>
-            <div class="stat-info"><span class="stat-value" id="statImages" data-count="0">0</span><span class="stat-label">Images Analyzed</span></div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-icon g-rose"><i class="bi bi-exclamation-triangle"></i></div>
-            <div class="stat-info"><span class="stat-value" id="statViolations" data-count="0">0</span><span class="stat-label">Violations</span></div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-icon g-violet"><i class="bi bi-film"></i></div>
-            <div class="stat-info"><span class="stat-value" id="statFrames" data-count="0">0</span><span class="stat-label">Frames Scanned</span></div>
+            <div class="stat-info"><span class="stat-value" id="statQuestions" data-count="0">0</span><span class="stat-label">Questions Answered</span></div>
         </div>
     </div>
 </div>
@@ -163,10 +163,10 @@ function animateCount(el, target) {
 async function loadDashboard() {
     try {
         const data = await (await fetch('/api/dashboard')).json();
-        animateCount(document.getElementById('statQueries'), data.stats.queries || 0);
-        animateCount(document.getElementById('statImages'), data.stats.images_analyzed || 0);
+        animateCount(document.getElementById('statViolToday'), data.stats.violations_today || 0);
         animateCount(document.getElementById('statViolations'), data.stats.violations || 0);
-        animateCount(document.getElementById('statFrames'), data.stats.video_frames || 0);
+        animateCount(document.getElementById('statInspections'), data.stats.inspections || 0);
+        animateCount(document.getElementById('statQuestions'), data.stats.questions || 0);
 
         const alerts = data.alerts || [];
         document.getElementById('alertCountBadge').textContent = alerts.length;

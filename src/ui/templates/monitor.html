@@ -59,6 +59,8 @@
                                 <video id="webcamVideo" autoplay playsinline muted style="display:none;"></video>
                                 <canvas id="liveCanvas"></canvas>
                                 <canvas id="captureCanvas" style="display:none;"></canvas>
+                                <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
+                                <span class="hud-corner bl"></span><span class="hud-corner br"></span>
                                 <div class="stage-topbar">
                                     <span class="live-pill" id="liveStatusBadge"><span class="dot"></span> LIVE</span>
                                     <span class="fps-pill" id="liveFps">-- FPS</span>
@@ -361,6 +363,7 @@ async function detectLoop() {
         document.getElementById('liveFps').textContent = (1000 / Math.max(interval, elapsed)).toFixed(1) + ' FPS';
 
         const badge = document.getElementById('liveStatusBadge');
+        document.querySelector('.video-stage').classList.toggle('alert', !!data.has_violations);
         if (data.has_violations) {
             badge.className = 'live-pill violation';
             badge.innerHTML = '<span class="dot"></span> VIOLATION';

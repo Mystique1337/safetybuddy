@@ -1,23 +1,35 @@
-# Core LLM + RAG
-openai>=1.30.0
-langchain>=0.2.0
-langchain-openai>=0.1.0
-langchain-community>=0.2.0
-langchain-text-splitters>=0.2.0
-chromadb>=0.5.0
-tiktoken>=0.7.0
+# SafetyBuddy — Python dependencies
+# ----------------------------------
+# Vision + chat run on self-hosted Gemma 4 (vLLM on Modal), called over an
+# OpenAI-compatible API. The vector store + analytics are self-hosted Supabase
+# (Postgres + pgvector). Real-time PPE detection stays on YOLO26.
 
-# Document processing
+# OpenAI-compatible client (-> Gemma 4 endpoint)
+openai>=1.55.0
+
+# Embeddings: nomic-embed-text-v1.5 on CPU (pulls in torch + transformers)
+sentence-transformers>=3.0.0
+einops>=0.7.0
+
+# Vector store + analytics: Postgres / Supabase + pgvector
+psycopg[binary]>=3.2.0
+pgvector>=0.3.0
+
+# Document processing (PDF/text ingestion)
 pymupdf>=1.24.0
 
-# Real-time video + YOLO26
+# Real-time PPE video detection
 ultralytics>=8.4.0
 opencv-python-headless>=4.9.0
 numpy>=1.26.0
 
-# Flask web framework
+# Web framework
 flask>=3.0.0
 gunicorn>=22.0.0
+
+# Deployment (Modal serverless GPU)
+modal>=1.0.0
+httpx>=0.27.0
 
 # Utilities
 python-dotenv>=1.0.0

@@ -27,3 +27,11 @@ Thumbs.db
 ## Docker / Temp
 *.log
 data/temp_*
+
+## Modal
+.modal.toml
+
+## Unrelated side-apps kept out of the SafetyBuddy repo
+soro_tts*.py
+exam_guard_app.py
+Exam Guard*/

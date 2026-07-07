@@ -7,7 +7,7 @@ import os
 
 from dotenv import load_dotenv
 
-# Add project root to path + load .env so SUPABASE_DB_URL / EMBED_MODEL are set.
+# Add project root to path + load .env so SUPABASE_URL / EMBED_MODEL are set.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 
@@ -23,8 +23,8 @@ def main():
     print("=" * 55)
 
     if not settings.db_enabled:
-        print("\n❌ SUPABASE_DB_URL is not set. Copy .env.example to .env, fill in")
-        print("   your Supabase Postgres URL, run scripts/setup_supabase.sh, then retry.")
+        print("\n❌ Supabase REST credentials are not set. Copy .env.example to .env,")
+        print("   fill in SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY, then retry.")
         return
 
     data_dir = os.path.join(os.path.dirname(__file__), "data", "raw")

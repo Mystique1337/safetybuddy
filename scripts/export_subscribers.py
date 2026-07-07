@@ -17,24 +17,18 @@ sys.path.insert(0, ROOT)
 load_dotenv(os.path.join(ROOT, ".env"))
 
 from src.config import settings
-from src.db import get_pool
+from src.db import select
 
 
 def main():
     if not settings.db_enabled:
-        print("SUPABASE_DB_URL is not set; nothing to export.")
+        print("Supabase REST credentials are not set; nothing to export.")
         return
     out = sys.argv[1] if len(sys.argv) > 1 else "subscribers.csv"
 
-    from psycopg.rows import dict_row
-
-    pool = get_pool()
-    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(
-            "SELECT email, wants_updates, source, created_at "
-            "FROM subscribers ORDER BY created_at"
-        )
-        rows = cur.fetchall()
+    rows = select(
+        "subscribers", "email,wants_updates,source,created_at", order="created_at"
+    ).json()
 
     with open(out, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["email", "wants_updates", "source", "created_at"])

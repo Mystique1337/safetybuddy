@@ -70,7 +70,9 @@ CREATE OR REPLACE FUNCTION safety_buddy.match_chunks (
 )
 RETURNS TABLE (content TEXT, metadata JSONB, similarity FLOAT)
 LANGUAGE sql STABLE
-SET search_path = safety_buddy, public AS $$
+-- `extensions` is on the path so the pgvector `<=>` operator resolves on
+-- self-hosted Supabase, where pgvector is installed in the extensions schema.
+SET search_path = safety_buddy, public, extensions AS $$
     SELECT c.content, c.metadata,
            1 - (c.embedding <=> query_embedding) AS similarity
     FROM kb_chunks c
@@ -94,7 +96,8 @@ CREATE OR REPLACE FUNCTION safety_buddy.hybrid_search (
 )
 RETURNS TABLE (content TEXT, metadata JSONB, score FLOAT, similarity FLOAT)
 LANGUAGE sql STABLE
-SET search_path = safety_buddy, public AS $$
+-- `extensions` on the path: pgvector's `<=>` lives there on self-hosted Supabase.
+SET search_path = safety_buddy, public, extensions AS $$
 WITH semantic AS (
     SELECT c.id,
            ROW_NUMBER() OVER (ORDER BY c.embedding <=> query_embedding) AS rank,

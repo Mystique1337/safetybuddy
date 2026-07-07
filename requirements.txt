@@ -11,9 +11,9 @@ openai>=1.55.0
 sentence-transformers>=3.0.0
 einops>=0.7.0
 
-# Vector store + analytics: Postgres / Supabase + pgvector (with connection pool)
-psycopg[binary,pool]>=3.2.0
-pgvector>=0.3.0
+# Vector store + analytics: self-hosted Supabase over its REST API (PostgREST).
+# Vector search runs server-side via the SQL functions in supabase/schema.sql;
+# the app calls them as RPCs over httpx (listed below).
 
 # Document processing + web ingestion (PDF + HTML main-text extraction)
 pymupdf>=1.24.0

@@ -2,9 +2,10 @@
 alerts, and answer feedback.
 
 Previously these lived in a process-local dict that vanished on restart. They now
-persist to the self-hosted Supabase schema (see supabase/schema.sql). When
-``SUPABASE_DB_URL`` is unset the module falls back to an in-memory store with the
-same shapes, so the app still runs for local UI work without a database.
+persist to the self-hosted Supabase schema over its REST API (see src/db.py and
+supabase/schema.sql). When the Supabase REST credentials are unset the module
+falls back to an in-memory store with the same shapes, so the app still runs for
+local UI work without a database.
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ import threading
 from datetime import datetime, timezone
 
 from src.config import settings
-from src.db import get_pool
+from src.db import count_rows, insert, select
 
 # In-memory fallback (used only when no database is configured).
 _mem = {"events": [], "alerts": [], "feedback": [], "subscribers": []}
@@ -46,15 +47,10 @@ def log_event(kind: str, mode: str | None = None, query: str | None = None,
             _mem["events"].append(row)
         return
     try:
-        from psycopg.types.json import Json
-
-        pool = get_pool()
-        with pool.connection() as conn:
-            conn.execute(
-                "INSERT INTO events (kind, mode, query, tokens, metadata) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (kind, mode, query, tokens, Json(meta)),
-            )
+        insert("events", {
+            "kind": kind, "mode": mode, "query": query,
+            "tokens": tokens, "metadata": meta,
+        })
     except Exception as e:
         print(f"Warning: log_event failed ({e}).")
 
@@ -73,15 +69,10 @@ def log_alert(source: str, severity: str, summary: str,
             _mem["alerts"].append(row)
         return alert
     try:
-        from psycopg.types.json import Json
-
-        pool = get_pool()
-        with pool.connection() as conn:
-            conn.execute(
-                "INSERT INTO alerts (source, severity, summary, time_label, metadata) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (source, severity, summary, time_label, Json(meta)),
-            )
+        insert("alerts", {
+            "source": source, "severity": severity, "summary": summary,
+            "time_label": time_label, "metadata": meta,
+        })
     except Exception as e:
         print(f"Warning: log_alert failed ({e}).")
     return alert
@@ -100,13 +91,10 @@ def log_feedback(message_id: str | None, rating: int, comment: str | None = None
             _mem["feedback"].append(row)
         return
     try:
-        pool = get_pool()
-        with pool.connection() as conn:
-            conn.execute(
-                "INSERT INTO feedback (message_id, rating, comment, query, answer) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (message_id, rating, comment, query, answer),
-            )
+        insert("feedback", {
+            "message_id": message_id, "rating": rating,
+            "comment": comment, "query": query, "answer": answer,
+        })
     except Exception as e:
         print(f"Warning: log_feedback failed ({e}).")
 
@@ -124,13 +112,12 @@ def subscribe(email: str, wants_updates: bool = True, source: str | None = None)
                 _mem["subscribers"].append(row)
         return True
     try:
-        pool = get_pool()
-        with pool.connection() as conn:
-            conn.execute(
-                "INSERT INTO subscribers (email, wants_updates, source) VALUES (%s, %s, %s) "
-                "ON CONFLICT (email) DO UPDATE SET wants_updates = EXCLUDED.wants_updates",
-                (email, wants_updates, source),
-            )
+        insert(
+            "subscribers",
+            {"email": email, "wants_updates": wants_updates, "source": source},
+            on_conflict="email",
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
         return True
     except Exception as e:
         print(f"Warning: subscribe failed ({e}).")
@@ -146,20 +133,15 @@ def recent_alerts(limit: int = 50) -> list:
         with _mem_lock:
             return list(reversed(_mem["alerts"][-limit:]))
     try:
-        from psycopg.rows import dict_row
-
-        pool = get_pool()
-        with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                "SELECT id, source, severity, summary, time_label, created_at "
-                "FROM alerts ORDER BY created_at DESC LIMIT %s",
-                (limit,),
-            )
-            return [{
-                "id": r["id"], "source": r["source"], "severity": r["severity"],
-                "summary": r["summary"], "time": r["time_label"],
-                "timestamp": r["created_at"].isoformat(),
-            } for r in cur.fetchall()]
+        rows = select(
+            "alerts", "id,source,severity,summary,time_label,created_at",
+            order="created_at.desc", limit=limit,
+        ).json()
+        return [{
+            "id": r["id"], "source": r["source"], "severity": r["severity"],
+            "summary": r["summary"], "time": r["time_label"],
+            "timestamp": r["created_at"],
+        } for r in rows]
     except Exception as e:
         print(f"Warning: recent_alerts failed ({e}).")
         return []
@@ -183,27 +165,21 @@ def dashboard() -> dict:
             } for e in reversed(events) if e["kind"] == "chat"][:20]
         return {"stats": stats, "alerts": recent_alerts(50), "recent_messages": recent_messages}
     try:
-        from psycopg.rows import dict_row
-
-        pool = get_pool()
-        with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """SELECT
-                     (SELECT count(*) FROM alerts
-                        WHERE created_at >= date_trunc('day', now()))             AS violations_today,
-                     (SELECT count(*) FROM alerts)                                AS violations,
-                     (SELECT count(*) FROM events WHERE kind IN ('image','video')) AS inspections,
-                     (SELECT count(*) FROM events WHERE kind='chat')              AS questions"""
-            )
-            stats = dict(cur.fetchone())
-            cur.execute(
-                "SELECT id, created_at, query, mode FROM events "
-                "WHERE kind='chat' ORDER BY created_at DESC LIMIT 20"
-            )
-            recent_messages = [{
-                "id": r["id"], "timestamp": r["created_at"].isoformat(),
-                "query": (r["query"] or "")[:100], "mode": r["mode"],
-            } for r in cur.fetchall()]
+        day_start = datetime.now(timezone.utc).strftime("%Y-%m-%dT00:00:00+00:00")
+        stats = {
+            "violations_today": count_rows("alerts", created_at=f"gte.{day_start}"),
+            "violations": count_rows("alerts"),
+            "inspections": count_rows("events", kind="in.(image,video)"),
+            "questions": count_rows("events", kind="eq.chat"),
+        }
+        rows = select(
+            "events", "id,created_at,query,mode",
+            kind="eq.chat", order="created_at.desc", limit=20,
+        ).json()
+        recent_messages = [{
+            "id": r["id"], "timestamp": r["created_at"],
+            "query": (r["query"] or "")[:100], "mode": r["mode"],
+        } for r in rows]
         return {"stats": stats, "alerts": recent_alerts(50), "recent_messages": recent_messages}
     except Exception as e:
         print(f"Warning: dashboard read failed ({e}).")

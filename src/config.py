@@ -51,11 +51,13 @@ class Settings:
     embed_dim: int = _i("EMBED_DIM", 768)
 
     # --- Self-hosted Supabase (pgvector vector store + analytics) ---
-    # Direct Postgres URL; all SafetyBuddy tables live in their own schema.
-    supabase_db_url: str = os.environ.get("SUPABASE_DB_URL", "")
-    supabase_db_schema: str = os.environ.get("SUPABASE_DB_SCHEMA", "safety_buddy")
+    # The self-hosted instance exposes only its REST API (PostgREST behind Kong),
+    # so the app talks to it over HTTPS with the service-role key, scoped to its
+    # own schema (Accept-Profile). See src/db.py.
     supabase_url: str = os.environ.get("SUPABASE_URL", "")
-    supabase_service_role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    supabase_service_role_key: str = os.environ.get(
+        "SUPABASE_SERVICE_ROLE_KEY", os.environ.get("SUPABASE_SERVICE_KEY", ""))
+    supabase_db_schema: str = os.environ.get("SUPABASE_DB_SCHEMA", "safety_buddy")
 
     # --- RAG tuning ---
     top_k: int = _i("RAG_TOP_K", 20)            # candidates pulled from the store
@@ -85,9 +87,9 @@ class Settings:
 
     @property
     def db_enabled(self) -> bool:
-        """True when a Supabase/Postgres URL is configured (else the app runs
-        with in-memory state and an empty knowledge base)."""
-        return bool(self.supabase_db_url)
+        """True when the Supabase REST credentials are configured (else the app
+        runs with in-memory state and an empty knowledge base)."""
+        return bool(self.supabase_url and self.supabase_service_role_key)
 
 
 settings = Settings()

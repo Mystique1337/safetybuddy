@@ -61,7 +61,6 @@ web_image = (
     .pip_install("torch", "torchvision", index_url="https://download.pytorch.org/whl/cpu")
     .pip_install(
         "openai>=1.55.0", "flask>=3.0.0",
-        "psycopg[binary,pool]>=3.2.0", "pgvector>=0.3.0",
         "sentence-transformers>=3.0.0", "einops>=0.7.0",
         "ultralytics>=8.4.0", "opencv-python-headless>=4.9.0", "numpy>=1.26.0",
         "pymupdf>=1.24.0", "trafilatura>=1.12.0",

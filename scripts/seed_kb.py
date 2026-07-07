@@ -24,7 +24,8 @@ from src.rag.web_ingest import ingest_urls
 
 def main():
     if not settings.db_enabled:
-        print("SUPABASE_DB_URL is not set. Fill in .env and run scripts/setup_supabase.sh first.")
+        print("Supabase REST credentials are not set. Fill in .env (SUPABASE_URL + "
+              "SUPABASE_SERVICE_ROLE_KEY) first.")
         return
     print(f"Seeding {len(SEED_SOURCES)} authoritative sources into schema "
           f"'{settings.supabase_db_schema}'...")

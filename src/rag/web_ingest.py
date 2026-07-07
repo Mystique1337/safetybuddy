@@ -13,7 +13,7 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 
 from src.config import settings
-from src.db import get_pool
+from src.db import delete, insert, select, update
 from src.ingestion.chunker import chunk_documents
 from src.ingestion.document_loader import Document
 from src.rag.sources import domain_tier, guess_doc_type, source_uid
@@ -58,37 +58,33 @@ def _pdf_to_text(data: bytes) -> str:
 # kb_sources bookkeeping
 # --------------------------------------------------------------------------- #
 def _get_source(url: str) -> dict | None:
-    from psycopg.rows import dict_row
-
-    pool = get_pool()
-    with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute("SELECT content_hash, fetched_at FROM kb_sources WHERE url = %s", (url,))
-        return cur.fetchone()
+    rows = select("kb_sources", "content_hash,fetched_at",
+                  url=f"eq.{url}", limit=1).json()
+    row = rows[0] if rows else None
+    if row and row.get("fetched_at"):
+        # Parse the ISO timestamp so the TTL check can compare datetimes.
+        row["fetched_at"] = datetime.fromisoformat(row["fetched_at"])
+    return row
 
 
 def _upsert_source(url, content_hash, title, doc_type, tier) -> None:
-    pool = get_pool()
-    with pool.connection() as conn:
-        conn.execute(
-            """INSERT INTO kb_sources (url, content_hash, title, doc_type, tier, fetched_at)
-               VALUES (%s, %s, %s, %s, %s, now())
-               ON CONFLICT (url) DO UPDATE SET
-                   content_hash = EXCLUDED.content_hash, title = EXCLUDED.title,
-                   doc_type = EXCLUDED.doc_type, tier = EXCLUDED.tier, fetched_at = now()""",
-            (url, content_hash, title, doc_type, tier),
-        )
+    insert(
+        "kb_sources",
+        {"url": url, "content_hash": content_hash, "title": title,
+         "doc_type": doc_type, "tier": tier,
+         "fetched_at": datetime.now(timezone.utc).isoformat()},
+        on_conflict="url",
+        prefer="resolution=merge-duplicates,return=minimal",
+    )
 
 
 def _touch_source(url: str) -> None:
-    pool = get_pool()
-    with pool.connection() as conn:
-        conn.execute("UPDATE kb_sources SET fetched_at = now() WHERE url = %s", (url,))
+    update("kb_sources", {"fetched_at": datetime.now(timezone.utc).isoformat()},
+           url=f"eq.{url}")
 
 
 def _delete_chunks_for_url(url: str) -> None:
-    pool = get_pool()
-    with pool.connection() as conn:
-        conn.execute("DELETE FROM kb_chunks WHERE source_url = %s", (url,))
+    delete("kb_chunks", source_url=f"eq.{url}")
 
 
 # --------------------------------------------------------------------------- #

@@ -5,16 +5,21 @@ All SafetyBuddy tables live in their own schema (``SUPABASE_DB_SCHEMA``, default
 Retrieval uses hybrid search (dense pgvector cosine + Postgres full-text, fused
 with Reciprocal Rank Fusion) defined in supabase/schema.sql.
 
-Sync access via psycopg3 with a small connection pool, which fits the Flask
-request model. If ``SUPABASE_DB_URL`` is unset the store degrades gracefully:
-``retrieve`` returns nothing and ``ingest_chunks`` is a no-op, so the app still
-boots for local UI work.
+Access is over Supabase's REST API (PostgREST): chunks are upserted into the
+``kb_chunks`` table, and retrieval/stats call the ``hybrid_search`` and
+``kb_stats`` SQL functions as RPCs. Embeddings travel as pgvector text literals
+(see ``src.db.vector_literal``). If the Supabase REST credentials are unset the
+store degrades gracefully: ``retrieve`` returns nothing and ``ingest_chunks`` is
+a no-op, so the app still boots for local UI work.
 """
 from __future__ import annotations
 
 from src.config import settings
-from src.db import get_pool
+from src.db import insert, rpc, vector_literal
 from src.rag.embeddings import embed_query, embed_texts
+
+# Rows per PostgREST insert request (embeddings are large; keep bodies sane).
+_INGEST_BATCH = 100
 
 
 # --------------------------------------------------------------------------- #
@@ -28,10 +33,8 @@ def ingest_chunks(chunks: list) -> None:
     if not chunks:
         return
     if not settings.db_enabled:
-        print("SUPABASE_DB_URL not set — skipping ingestion. Fill in .env and re-run.")
+        print("Supabase REST credentials not set — skipping ingestion. Fill in .env and re-run.")
         return
-
-    from psycopg.types.json import Json
 
     contents = [c["content"] for c in chunks]
     print(f"Embedding {len(contents)} chunks with {settings.embed_model} (CPU)...")
@@ -41,24 +44,23 @@ def ingest_chunks(chunks: list) -> None:
     for c, emb in zip(chunks, embeddings):
         md = c.get("metadata", {}) or {}
         page = md.get("page")
-        rows.append((
-            c["id"], c["content"], emb,
-            md.get("filename"), md.get("doc_type"),
-            int(page) if isinstance(page, (int, float)) else None,
-            md.get("source_url"),
-            Json(md),
-        ))
+        rows.append({
+            "chunk_uid": c["id"],
+            "content": c["content"],
+            "embedding": vector_literal(emb),
+            "filename": md.get("filename"),
+            "doc_type": md.get("doc_type"),
+            "page": int(page) if isinstance(page, (int, float)) else None,
+            "source_url": md.get("source_url"),
+            "metadata": md,
+        })
 
-    pool = get_pool()
-    with pool.connection() as conn, conn.cursor() as cur:
-        cur.executemany(
-            """
-            INSERT INTO kb_chunks
-                (chunk_uid, content, embedding, filename, doc_type, page, source_url, metadata)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (chunk_uid) DO NOTHING
-            """,
-            rows,
+    # Upsert; ON CONFLICT (chunk_uid) DO NOTHING == ignore-duplicates.
+    for i in range(0, len(rows), _INGEST_BATCH):
+        insert(
+            "kb_chunks", rows[i:i + _INGEST_BATCH],
+            on_conflict="chunk_uid",
+            prefer="resolution=ignore-duplicates,return=minimal",
         )
     print(f"Ingested {len(rows)} chunks into Supabase schema '{settings.supabase_db_schema}'.")
 
@@ -75,23 +77,15 @@ def retrieve(query: str, n_results: int = 5, doc_type: str | None = None) -> lis
     if not settings.db_enabled:
         return []
     try:
-        from psycopg.rows import dict_row
-
         emb = embed_query(query)
         # Over-fetch when filtering by doc_type, then filter in Python.
         fetch = n_results * 4 if doc_type else n_results
 
-        pool = get_pool()
-        with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-            # Cast the embedding param to vector explicitly: psycopg sends a
-            # Python list as double precision[], and Postgres will not implicitly
-            # cast that to vector during function overload resolution.
-            cur.execute(
-                "SELECT content, metadata, score, similarity "
-                "FROM hybrid_search(%s, %s::vector, %s::int)",
-                (query, emb, fetch),
-            )
-            rows = cur.fetchall()
+        rows = rpc("hybrid_search", {
+            "query_text": query,
+            "query_embedding": vector_literal(emb),
+            "match_count": fetch,
+        })
     except Exception as e:  # missing schema, network, etc. — degrade gracefully
         print(f"Warning: vector retrieval failed ({e}). Returning no context.")
         return []
@@ -119,12 +113,7 @@ def kb_stats() -> dict:
     if not settings.db_enabled:
         return {"chunks": 0, "doc_types": 0, "last_ingest": None}
     try:
-        from psycopg.rows import dict_row
-
-        pool = get_pool()
-        with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT * FROM kb_stats()")
-            row = cur.fetchone()
-        return dict(row) if row else {"chunks": 0, "doc_types": 0, "last_ingest": None}
+        rows = rpc("kb_stats", {})
+        return rows[0] if rows else {"chunks": 0, "doc_types": 0, "last_ingest": None}
     except Exception:
         return {"chunks": 0, "doc_types": 0, "last_ingest": None}
